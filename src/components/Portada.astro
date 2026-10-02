@@ -19,7 +19,7 @@ const src = urlPortada(portadaId, tamano);
 		src ? (
 			<img src={src} alt="" loading={carga} decoding="async" width={tamano === 'L' ? 320 : 120} height={tamano === 'L' ? 480 : 180} />
 		) : (
-			<span class="sin-portada" aria-hidden="true">
+			<span class="sin-portada contorno-mano" aria-hidden="true">
 				{titulo}
 			</span>
 		)
@@ -56,10 +56,14 @@ const src = urlPortada(portadaId, tamano);
 		align-items: flex-end;
 		height: 100%;
 		padding: 0.5rem;
-		border-left: 3px solid var(--rosa);
 		font: italic 700 0.75rem / 1.15 var(--font-libro);
 		color: var(--tinta-suave);
 		overflow: hidden;
+	}
+
+	/* La portada recorta lo que sobresale: el trazo va por dentro. */
+	.sin-portada::before {
+		inset: 2px;
 	}
 
 	.portada-L .sin-portada {

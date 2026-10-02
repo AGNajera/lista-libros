@@ -163,7 +163,7 @@ const datos = libro
 						</p>
 					</div>
 
-					<ul class="tiendas papel">
+					<ul class="tiendas papel contorno-mano">
 						{tiendas.map((tienda) => {
 							const sucursales = urlSucursales(tienda, ciudad);
 							const deSuCatalogo = esDeSuCatalogo(tienda, libro.editorial);
@@ -314,7 +314,6 @@ const datos = libro
 		list-style: none;
 		margin: 0;
 		padding: 0;
-		border-left: 3px solid var(--rosa);
 		border-radius: 0.3rem;
 	}
 
