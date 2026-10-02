@@ -1,7 +1,7 @@
 ---
 import { ESTADOS, ciudadesPorEstado, obtenerUbicacion } from '../lib/ubicacion';
 
-const { ciudad } = obtenerUbicacion(Astro.cookies, Astro.request.headers);
+const { ciudad } = obtenerUbicacion(Astro.url, Astro.request.headers);
 ---
 
 <div class="ubicacion">
@@ -25,12 +25,14 @@ const { ciudad } = obtenerUbicacion(Astro.cookies, Astro.request.headers);
 
 <script>
 	import { navigate } from 'astro:transitions/client';
-	import { COOKIE_CIUDAD, ciudadMasCercana } from '../lib/ubicacion';
+	import { PARAM_CIUDAD, ciudadMasCercana } from '../lib/ubicacion';
 
 	function guardarCiudad(id: string) {
-		document.cookie = `${COOKIE_CIUDAD}=${id}; path=/; max-age=31536000; samesite=lax`;
+		// La ciudad va en la URL y no en una cookie: no se guarda nada en el dispositivo.
+		const url = new URL(location.href);
+		url.searchParams.set(PARAM_CIUDAD, id);
 		// Se vuelve a pedir la misma página para que el servidor arme los enlaces de la nueva ciudad.
-		navigate(location.pathname + location.search, { history: 'replace' });
+		navigate(url.pathname + url.search, { history: 'replace' });
 	}
 
 	// Los listeners van en document para que sigan funcionando después de cada transición.
@@ -53,7 +55,7 @@ const { ciudad } = obtenerUbicacion(Astro.cookies, Astro.request.headers);
 		avisar('Buscando tu ubicación…');
 		navigator.geolocation.getCurrentPosition(
 			({ coords }) => {
-				// Solo se guarda el id de la ciudad más cercana; las coordenadas no salen del navegador.
+				// Solo viaja el id de la ciudad más cercana; las coordenadas no salen del navegador.
 				guardarCiudad(ciudadMasCercana(coords.latitude, coords.longitude).id);
 			},
 			() => {

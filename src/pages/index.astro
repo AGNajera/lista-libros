@@ -2,6 +2,7 @@
 import FichaBusqueda from '../components/FichaBusqueda.astro';
 import Layout from '../layouts/Layout.astro';
 import { TIENDAS } from '../lib/tiendas';
+import { conCiudad } from '../lib/ubicacion';
 
 /**
  * Libros que aparecen en al menos dos listas de más vendidos de México (consultadas el 2 de octubre de 2026):
@@ -32,7 +33,7 @@ const sugerencias = [
 				{
 					sugerencias.map(({ titulo, autor, obraId }) => (
 						<li>
-							<a href={`/libro/${obraId}`} data-astro-prefetch>
+							<a href={conCiudad(`/libro/${obraId}`, Astro.url)} data-astro-prefetch>
 								{titulo}
 							</a>
 							<span>{autor}</span>

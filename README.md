@@ -8,7 +8,7 @@ Buscador de libros que muestra dónde comprarlos en México, impresos o en eBook
 
 ## Cómo se decide la ubicación
 
-1. La ciudad que el usuario eligió en la barra superior o con «Usar mi ubicación» (se guarda en la cookie `ciudad`; las coordenadas no salen del navegador).
+1. La ciudad que el usuario eligió en la barra superior o con «Usar mi ubicación». Viaja en la URL (`?ciudad=coyoacan`) y los enlaces internos la conservan; no se usan cookies ni se guarda nada en el dispositivo, y las coordenadas no salen del navegador.
 2. La región que manda el hosting, si existe (`x-vercel-ip-country-region` en Vercel o `cf-region-code` en Cloudflare).
 3. Si no hay nada, Cuauhtémoc, CDMX.
 

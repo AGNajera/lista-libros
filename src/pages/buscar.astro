@@ -5,6 +5,7 @@ import SelloIdioma from '../components/SelloIdioma.astro';
 import Layout from '../layouts/Layout.astro';
 import { ESPANOL } from '../lib/idiomas';
 import { POR_PAGINA, buscarLibros, type ResultadoBusqueda } from '../lib/openlibrary';
+import { conCiudad } from '../lib/ubicacion';
 
 const consulta = Astro.url.searchParams.get('q')?.trim() ?? '';
 const pagina = Math.max(1, Math.floor(Number(Astro.url.searchParams.get('pagina'))) || 1);
@@ -23,9 +24,10 @@ const libros = resultado?.libros ?? [];
 const hayEspanol = libros.some((libro) => libro.idioma === ESPANOL);
 const totalPaginas = resultado ? Math.ceil(resultado.total / POR_PAGINA) : 0;
 
-const enlacePagina = (n: number) => `/buscar?${new URLSearchParams({ q: consulta, ...(n > 1 && { pagina: String(n) }) })}`;
+const enlacePagina = (n: number) =>
+	conCiudad(`/buscar?${new URLSearchParams({ q: consulta, ...(n > 1 && { pagina: String(n) }) })}`, Astro.url);
 const enlaceLibro = (obraId: string, edicionId?: string) =>
-	`/libro/${obraId}?${new URLSearchParams({ ...(edicionId && { ed: edicionId }), q: consulta })}`;
+	conCiudad(`/libro/${obraId}?${new URLSearchParams({ ...(edicionId && { ed: edicionId }), q: consulta })}`, Astro.url);
 ---
 
 <Layout titulo={`Resultados de «${consulta}»`}>

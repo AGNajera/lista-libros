@@ -2,6 +2,7 @@
 import { Font } from 'astro:assets';
 import { ClientRouter } from 'astro:transitions';
 import SelectorUbicacion from '../components/SelectorUbicacion.astro';
+import { conCiudad } from '../lib/ubicacion';
 import '../styles/global.css';
 
 interface Props {
@@ -30,7 +31,7 @@ const {
 	</head>
 	<body>
 		<header class="barra">
-			<a href="/" class="marca" aria-label="Librero, ir al inicio">Librero</a>
+			<a href={conCiudad('/', Astro.url)} class="marca" aria-label="Librero, ir al inicio">Librero</a>
 			<div class="barra-busqueda"><slot name="barra" /></div>
 			<SelectorUbicacion />
 		</header>
