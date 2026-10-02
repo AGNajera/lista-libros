@@ -1,23 +1,86 @@
+---
+import { Font } from 'astro:assets';
+import { ClientRouter } from 'astro:transitions';
+import SelectorUbicacion from '../components/SelectorUbicacion.astro';
+import '../styles/global.css';
+
+interface Props {
+	titulo?: string;
+	descripcion?: string;
+}
+
+const {
+	titulo,
+	descripcion = 'Busca un libro y encuentra dónde comprarlo en México: Amazon, Gandhi, Planeta, Penguin, Sanborns, Sears y Liverpool.',
+} = Astro.props;
+---
+
 <!doctype html>
-<html lang="en">
+<html lang="es-MX">
 	<head>
 		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="description" content={descripcion} />
+		<meta name="theme-color" content="#111b2e" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro Basics</title>
+		<title>{titulo ? `${titulo} | Librero` : 'Librero: dónde comprar libros en México'}</title>
+		<Font cssVariable="--font-libro" preload />
+		<Font cssVariable="--font-ui" />
+		<ClientRouter />
 	</head>
 	<body>
-		<slot />
+		<header class="barra">
+			<a href="/" class="marca" aria-label="Librero, ir al inicio">Librero</a>
+			<div class="barra-busqueda"><slot name="barra" /></div>
+			<SelectorUbicacion />
+		</header>
+		<main>
+			<slot />
+		</main>
+		<footer class="pie">
+			<p>
+				Los datos de los libros vienen de <a href="https://openlibrary.org" rel="noopener">Open Library</a>. Cada
+				tienda confirma precio, existencias y envío.
+			</p>
+		</footer>
 	</body>
 </html>
 
 <style>
-	html,
-	body {
-		margin: 0;
+	.barra {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.75rem 1.5rem;
 		width: 100%;
-		height: 100%;
+		max-width: var(--ancho);
+		margin: 0 auto;
+		padding: 1rem 1rem 0;
+	}
+
+	.marca {
+		font: 800 var(--paso-2) / 1 var(--font-libro);
+		letter-spacing: -0.01em;
+		text-decoration: none;
+		/* El margen rojo de la ficha, en miniatura. */
+		padding-left: 0.6rem;
+		border-left: 3px solid var(--rosa);
+	}
+
+	.barra-busqueda {
+		flex: 1 1 18rem;
+	}
+
+	.barra-busqueda:empty {
+		display: none;
+	}
+
+	.pie {
+		width: 100%;
+		max-width: var(--ancho);
+		margin: 0 auto;
+		padding: 1.5rem 1rem 2.5rem;
+		color: var(--tinta-suave);
+		font-size: var(--paso--1);
 	}
 </style>

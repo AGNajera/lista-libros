@@ -1,0 +1,117 @@
+---
+import { ESTADOS, ciudadesPorEstado, obtenerUbicacion } from '../lib/ubicacion';
+
+const { ciudad } = obtenerUbicacion(Astro.cookies, Astro.request.headers);
+---
+
+<div class="ubicacion">
+	<label for="ciudad">Tiendas cerca de</label>
+	<select id="ciudad" data-ciudad>
+		{
+			ciudadesPorEstado().map(([estado, ciudades]) => (
+				<optgroup label={ESTADOS[estado]}>
+					{ciudades.map((c) => (
+						<option value={c.id} selected={c.id === ciudad.id}>
+							{c.nombre}
+						</option>
+					))}
+				</optgroup>
+			))
+		}
+	</select>
+	<button type="button" class="ubicarme" data-geolocalizar>Usar mi ubicación</button>
+	<p class="estado" role="status" data-estado-ubicacion></p>
+</div>
+
+<script>
+	import { navigate } from 'astro:transitions/client';
+	import { COOKIE_CIUDAD, ciudadMasCercana } from '../lib/ubicacion';
+
+	function guardarCiudad(id: string) {
+		document.cookie = `${COOKIE_CIUDAD}=${id}; path=/; max-age=31536000; samesite=lax`;
+		// Se vuelve a pedir la misma página para que el servidor arme los enlaces de la nueva ciudad.
+		navigate(location.pathname + location.search, { history: 'replace' });
+	}
+
+	// Los listeners van en document para que sigan funcionando después de cada transición.
+	document.addEventListener('change', (evento) => {
+		const select = evento.target;
+		if (select instanceof HTMLSelectElement && select.matches('[data-ciudad]')) guardarCiudad(select.value);
+	});
+
+	document.addEventListener('click', (evento) => {
+		const boton = (evento.target as Element).closest<HTMLButtonElement>('[data-geolocalizar]');
+		if (!boton) return;
+		const estado = document.querySelector<HTMLElement>('[data-estado-ubicacion]');
+		const avisar = (texto: string) => estado && (estado.textContent = texto);
+
+		if (!('geolocation' in navigator)) {
+			avisar('Tu navegador no comparte ubicación. Elige tu ciudad en la lista.');
+			return;
+		}
+		boton.disabled = true;
+		avisar('Buscando tu ubicación…');
+		navigator.geolocation.getCurrentPosition(
+			({ coords }) => {
+				// Solo se guarda el id de la ciudad más cercana; las coordenadas no salen del navegador.
+				guardarCiudad(ciudadMasCercana(coords.latitude, coords.longitude).id);
+			},
+			() => {
+				boton.disabled = false;
+				avisar('No pudimos leer tu ubicación. Elige tu ciudad en la lista.');
+			},
+			{ maximumAge: 600_000, timeout: 10_000 },
+		);
+	});
+</script>
+
+<style>
+	.ubicacion {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.35rem 0.6rem;
+		font-size: var(--paso--1);
+	}
+
+	label {
+		color: var(--tinta-suave);
+	}
+
+	select {
+		max-width: 15rem;
+		min-height: 2.5rem;
+		padding: 0.3rem 0.5rem;
+		border: 1px solid var(--renglon);
+		border-radius: 0.4rem;
+		background: var(--papel);
+		color: var(--tinta);
+		font: 700 var(--paso--1) var(--font-ui);
+	}
+
+	.ubicarme {
+		min-height: 2.5rem;
+		padding: 0.3rem 0.2rem;
+		border: 0;
+		background: none;
+		color: var(--rosa-texto);
+		font: 700 var(--paso--1) var(--font-ui);
+		text-decoration: underline;
+		text-underline-offset: 0.2em;
+		cursor: pointer;
+	}
+
+	.ubicarme:disabled {
+		color: var(--gris-sello);
+		cursor: progress;
+	}
+
+	.estado {
+		flex-basis: 100%;
+		color: var(--tinta-suave);
+	}
+
+	.estado:empty {
+		display: none;
+	}
+</style>

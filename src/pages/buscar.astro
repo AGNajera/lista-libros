@@ -1,0 +1,203 @@
+---
+import BuscadorCompacto from '../components/BuscadorCompacto.astro';
+import Portada from '../components/Portada.astro';
+import SelloIdioma from '../components/SelloIdioma.astro';
+import Layout from '../layouts/Layout.astro';
+import { ESPANOL } from '../lib/idiomas';
+import { POR_PAGINA, buscarLibros, type ResultadoBusqueda } from '../lib/openlibrary';
+
+const consulta = Astro.url.searchParams.get('q')?.trim() ?? '';
+const pagina = Math.max(1, Math.floor(Number(Astro.url.searchParams.get('pagina'))) || 1);
+
+if (consulta.length < 2) return Astro.redirect('/');
+
+let resultado: ResultadoBusqueda | undefined;
+try {
+	resultado = await buscarLibros(consulta, pagina);
+} catch (error) {
+	console.error('Búsqueda fallida', error);
+	Astro.response.status = 502;
+}
+
+const libros = resultado?.libros ?? [];
+const hayEspanol = libros.some((libro) => libro.idioma === ESPANOL);
+const totalPaginas = resultado ? Math.ceil(resultado.total / POR_PAGINA) : 0;
+
+const enlacePagina = (n: number) => `/buscar?${new URLSearchParams({ q: consulta, ...(n > 1 && { pagina: String(n) }) })}`;
+const enlaceLibro = (obraId: string, edicionId?: string) =>
+	`/libro/${obraId}?${new URLSearchParams({ ...(edicionId && { ed: edicionId }), q: consulta })}`;
+---
+
+<Layout titulo={`Resultados de «${consulta}»`}>
+	<BuscadorCompacto slot="barra" valor={consulta} />
+
+	<h1>
+		{resultado ? (resultado.total === 1 ? '1 libro' : `${resultado.total.toLocaleString('es-MX')} libros`) : 'Resultados'}{' '}
+		para «{consulta}»
+	</h1>
+
+	{
+		!resultado && (
+			<p class="aviso" role="alert">
+				El catálogo de Open Library no respondió. Espera unos segundos y <a href={enlacePagina(pagina)}>vuelve a buscar</a>.
+			</p>
+		)
+	}
+
+	{
+		resultado && libros.length === 0 && (
+			<div class="vacio">
+				<p>No encontramos libros con «{consulta}».</p>
+				<p>Revisa la ortografía, prueba solo con el apellido del autor o busca por ISBN.</p>
+			</div>
+		)
+	}
+
+	{
+		libros.length > 0 && !hayEspanol && (
+			<p class="aviso" role="note">
+				No encontramos ediciones en español {pagina > 1 ? 'en esta página' : `de «${consulta}»`}. Estos resultados están
+				en otros idiomas; cada uno indica cuál.
+			</p>
+		)
+	}
+
+	{
+		libros.length > 0 && (
+			<ol class="resultados papel">
+				{libros.map((libro, i) => (
+					<li>
+						<a class="resultado" href={enlaceLibro(libro.obraId, libro.edicionId)} data-astro-prefetch>
+							<Portada obraId={libro.obraId} portadaId={libro.portadaId} titulo={libro.titulo} tamano="M" carga={i < 4 ? 'eager' : 'lazy'} />
+							<div class="datos">
+								<h2 transition:name={`titulo-${libro.obraId}`}>{libro.titulo}</h2>
+								{libro.autores.length > 0 && <p class="autor">{libro.autores.join(', ')}</p>}
+								<p class="edicion">{[libro.editorial, libro.anio].filter(Boolean).join(', ')}</p>
+							</div>
+							<SelloIdioma idioma={libro.idioma} />
+						</a>
+					</li>
+				))}
+			</ol>
+		)
+	}
+
+	{
+		totalPaginas > 1 && (
+			<nav class="paginas" aria-label="Páginas de resultados">
+				{pagina > 1 && <a href={enlacePagina(pagina - 1)}>Página anterior</a>}
+				<span>
+					Página {pagina} de {totalPaginas.toLocaleString('es-MX')}
+				</span>
+				{pagina < totalPaginas && <a href={enlacePagina(pagina + 1)}>Página siguiente</a>}
+			</nav>
+		)
+	}
+</Layout>
+
+<style>
+	h1 {
+		font-size: var(--paso-3);
+		margin: 1rem 0 1.5rem;
+	}
+
+	.aviso {
+		margin-bottom: 1.5rem;
+	}
+
+	.vacio {
+		display: grid;
+		gap: 0.25rem;
+		font-size: var(--paso-1);
+	}
+
+	.vacio p + p {
+		color: var(--tinta-suave);
+		font-size: var(--paso-0);
+	}
+
+	.resultados {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		border-left: 3px solid var(--rosa);
+		border-radius: 0.3rem;
+	}
+
+	.resultados li + li {
+		border-top: 1px solid var(--renglon);
+	}
+
+	.resultado {
+		display: grid;
+		grid-template-columns: auto 1fr auto;
+		align-items: start;
+		gap: 0.5rem 1.25rem;
+		padding: 1rem 1.25rem;
+		text-decoration: none;
+	}
+
+	.resultado:hover h2 {
+		text-decoration: underline;
+		text-decoration-color: var(--rosa);
+		text-decoration-thickness: 0.06em;
+		text-underline-offset: 0.15em;
+	}
+
+	.resultado:focus-visible {
+		outline-offset: -3px;
+	}
+
+	.datos {
+		display: grid;
+		gap: 0.2rem;
+		min-width: 0;
+	}
+
+	h2 {
+		font-size: var(--paso-1);
+		font-weight: 700;
+		color: var(--tinta);
+	}
+
+	.autor {
+		font-family: var(--font-libro);
+		font-style: italic;
+	}
+
+	.edicion {
+		color: var(--tinta-suave);
+		font-size: var(--paso--1);
+	}
+
+	.paginas {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: space-between;
+		align-items: center;
+		gap: 1rem;
+		margin-top: 1.5rem;
+		font-weight: 700;
+	}
+
+	.paginas span {
+		color: var(--tinta-suave);
+		font-weight: 400;
+	}
+
+	@media (max-width: 34rem) {
+		.resultado {
+			grid-template-columns: auto 1fr;
+			padding: 1rem;
+		}
+
+		.resultado :global(.portada) {
+			grid-row: span 2;
+		}
+
+		.resultado :global(.sello) {
+			grid-column: 2;
+			justify-self: start;
+		}
+	}
+</style>

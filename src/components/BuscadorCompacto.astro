@@ -1,0 +1,49 @@
+---
+interface Props {
+	valor?: string;
+}
+
+const { valor = '' } = Astro.props;
+---
+
+<form class="compacto" action="/buscar" method="get" role="search" transition:name="buscador">
+	<label class="visualmente-oculto" for="q-barra">Título, autor o ISBN</label>
+	<input id="q-barra" name="q" type="search" required minlength="2" value={valor} placeholder="Título, autor o ISBN" />
+	<button type="submit">Buscar</button>
+</form>
+
+<style>
+	.compacto {
+		display: flex;
+		max-width: 32rem;
+		border-bottom: 2px solid var(--tinta-suave);
+	}
+
+	.compacto:focus-within {
+		border-bottom-color: var(--rosa);
+	}
+
+	input {
+		flex: 1;
+		min-width: 0;
+		min-height: 2.5rem;
+		padding: 0.2rem 0;
+		border: 0;
+		background: transparent;
+		color: var(--tinta);
+		font: 700 var(--paso-1) var(--font-libro);
+	}
+
+	input:focus-visible {
+		outline: none;
+	}
+
+	button {
+		padding: 0 0.25rem 0 0.75rem;
+		border: 0;
+		background: none;
+		color: var(--rosa-texto);
+		font: 700 var(--paso-0) var(--font-ui);
+		cursor: pointer;
+	}
+</style>
