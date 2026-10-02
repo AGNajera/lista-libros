@@ -7,7 +7,7 @@ import Layout from '../../layouts/Layout.astro';
 import { ESPANOL, avisoIdioma, nombreIdioma } from '../../lib/idiomas';
 import { obtenerLibro, type DetalleLibro } from '../../lib/openlibrary';
 import { pareceIngles } from '../../lib/sinopsis';
-import { TIENDAS, consultaParaTiendas, esDeSuCatalogo, urlSucursales } from '../../lib/tiendas';
+import { TIENDAS, consultaParaTiendas, esDeSuCatalogo, tituloParaTiendas, urlSucursales } from '../../lib/tiendas';
 import { nombreCompleto, obtenerUbicacion } from '../../lib/ubicacion';
 
 const obraId = Astro.params.id ?? '';
@@ -27,7 +27,13 @@ try {
 
 const { ciudad, origen } = obtenerUbicacion(Astro.cookies, Astro.request.headers);
 const lugar = nombreCompleto(ciudad);
+const tituloTiendas = libro ? tituloParaTiendas(libro) : '';
 const consultaTiendas = libro ? consultaParaTiendas(libro) : '';
+// Las tiendas que buscan sin el autor, para aclararlo en la nota cuando su consulta es distinta.
+const soloTitulo =
+	consultaTiendas !== tituloTiendas
+		? new Intl.ListFormat('es').format(TIENDAS.filter((tienda) => tienda.soloTitulo).map((tienda) => tienda.nombreCorto))
+		: '';
 
 // La tienda cuyo grupo editorial publica esta edición va primero.
 const tiendas = libro
@@ -159,7 +165,8 @@ const datos = libro
 							)}
 						</p>
 						<p class="nota">
-							Buscamos «{consultaTiendas}» en cada tienda; ahí verás precio, existencias y otras ediciones.
+							Buscamos «{consultaTiendas}» en cada tienda{soloTitulo && ` (en ${soloTitulo}, solo «${tituloTiendas}»)`}; ahí
+							verás precio, existencias y otras ediciones.
 						</p>
 					</div>
 
@@ -167,6 +174,7 @@ const datos = libro
 						{tiendas.map((tienda) => {
 							const sucursales = urlSucursales(tienda, ciudad);
 							const deSuCatalogo = esDeSuCatalogo(tienda, libro.editorial);
+							const busqueda = consultaParaTiendas(libro, tienda);
 							return (
 								<li class:list={['tienda', { destacada: deSuCatalogo }]}>
 									<div class="tienda-nombre">
@@ -175,8 +183,8 @@ const datos = libro
 										{deSuCatalogo && <p class="catalogo">{libro.editorial} es de su grupo editorial</p>}
 									</div>
 									<div class="tienda-acciones">
-										<BotonTienda tienda={tienda} href={tienda.buscar(consultaTiendas)} />
-										{tienda.buscarEbook && <BotonTienda tienda={tienda} href={tienda.buscarEbook(consultaTiendas)} ebook />}
+										<BotonTienda tienda={tienda} href={tienda.buscar(busqueda)} />
+										{tienda.buscarEbook && <BotonTienda tienda={tienda} href={tienda.buscarEbook(busqueda)} ebook />}
 									</div>
 									<p class="tienda-sucursales">
 										{sucursales ? (

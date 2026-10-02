@@ -26,6 +26,8 @@ export interface Tienda {
 	buscar: (consulta: string) => string;
 	/** Búsqueda de eBook cuando la tienda la separa de los impresos. */
 	buscarEbook?: (consulta: string) => string;
+	/** Su buscador exige todas las palabras en un mismo campo: con título y autor juntos no encuentra nada. */
+	soloTitulo?: boolean;
 	/** Nombre con el que se buscan sucursales en Google Maps; sin él, la tienda solo vende en línea. */
 	sucursales?: string;
 	/** Sellos editoriales que pertenecen al grupo, para avisar que el libro es de su catálogo. */
@@ -62,6 +64,7 @@ export const TIENDAS: Tienda[] = [
 		marca: { fondo: '#0f81e4', texto: '#ffffff', hover: '#0b6cc0', icono: '/tiendas/planeta.svg', placa: false },
 		vende: 'impreso y eBook',
 		buscar: (q) => `https://www.planetadelibros.com.mx/?textoBuscador=${e(q)}`,
+		soloTitulo: true,
 		sellos:
 			/planeta|booket|destino|seix barral|paid[oó]s|diana|cr[ií]tica|espasa|ariel|tusquets|minotauro|temas de hoy|deusto|emec[eé]|joaqu[ií]n mortiz|crossbooks|alienta|zenith/i,
 	},
@@ -104,9 +107,15 @@ export const TIENDAS: Tienda[] = [
 	},
 ];
 
-/** Título y primer autor: funciona en todas las tiendas, aunque no indexen ISBN. */
-export function consultaParaTiendas(libro: Libro): string {
-	const titulo = libro.titulo.split(/[:(]/)[0].trim();
+/** Título sin subtítulo, porque las tiendas suelen registrar otro o ninguno. */
+export function tituloParaTiendas(libro: Libro): string {
+	return libro.titulo.split(/[:(]/)[0].trim();
+}
+
+/** Título y primer autor, que sirve aunque la tienda no indexe ISBN; solo el título si su buscador no los mezcla. */
+export function consultaParaTiendas(libro: Libro, tienda?: Tienda): string {
+	const titulo = tituloParaTiendas(libro);
+	if (tienda?.soloTitulo) return titulo;
 	return [titulo, libro.autores[0]].filter(Boolean).join(' ');
 }
 
