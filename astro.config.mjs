@@ -1,13 +1,13 @@
 // @ts-check
 import { defineConfig, fontProviders } from 'astro/config';
-import node from '@astrojs/node';
+import vercel from '@astrojs/vercel';
 
 // https://astro.build/config
 export default defineConfig({
 	// Las búsquedas y la ubicación del usuario cambian en cada petición,
 	// así que las páginas se renderizan en el servidor.
 	output: 'server',
-	adapter: node({ mode: 'standalone' }),
+	adapter: vercel(),
 	prefetch: { defaultStrategy: 'hover' },
 	fonts: [
 		{
