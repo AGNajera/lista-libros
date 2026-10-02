@@ -1,8 +1,9 @@
 ---
-import { nombreCompleto, obtenerUbicacion } from '../lib/ubicacion';
+import { PARAM_CIUDAD, ciudadElegida, nombreCompleto, obtenerUbicacion } from '../lib/ubicacion';
 
 /** El buscador grande de la portada, dibujado como una ficha catalográfica. */
-const { ciudad } = obtenerUbicacion(Astro.cookies, Astro.request.headers);
+const { ciudad } = obtenerUbicacion(Astro.url, Astro.request.headers);
+const elegida = ciudadElegida(Astro.url);
 ---
 
 <form class="ficha papel contorno-mano" action="/buscar" method="get" role="search">
@@ -10,6 +11,7 @@ const { ciudad } = obtenerUbicacion(Astro.cookies, Astro.request.headers);
 		<span>Para</span>
 		{ciudad.nombre.replace(/\s*\(.*\)/, '')}
 	</p>
+	{elegida && <input type="hidden" name={PARAM_CIUDAD} value={elegida.id} />}
 	<label class="encabezado" for="q">Título, autor o ISBN</label>
 	<div class="renglon-entrada">
 		<input id="q" name="q" type="search" required minlength="2" autocomplete="off" placeholder="Pedro Páramo" />

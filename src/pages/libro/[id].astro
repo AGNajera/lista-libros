@@ -8,7 +8,7 @@ import { ESPANOL, avisoIdioma, nombreIdioma } from '../../lib/idiomas';
 import { obtenerLibro, type DetalleLibro } from '../../lib/openlibrary';
 import { pareceIngles } from '../../lib/sinopsis';
 import { TIENDAS, consultaParaTiendas, esDeSuCatalogo, tituloParaTiendas, urlSucursales } from '../../lib/tiendas';
-import { nombreCompleto, obtenerUbicacion } from '../../lib/ubicacion';
+import { conCiudad, nombreCompleto, obtenerUbicacion } from '../../lib/ubicacion';
 
 const obraId = Astro.params.id ?? '';
 const edicionId = Astro.url.searchParams.get('ed') ?? undefined;
@@ -25,7 +25,7 @@ try {
 	Astro.response.status = 502;
 }
 
-const { ciudad, origen } = obtenerUbicacion(Astro.cookies, Astro.request.headers);
+const { ciudad, origen } = obtenerUbicacion(Astro.url, Astro.request.headers);
 const lugar = nombreCompleto(ciudad);
 const tituloTiendas = libro ? tituloParaTiendas(libro) : '';
 const consultaTiendas = libro ? consultaParaTiendas(libro) : '';
@@ -41,10 +41,13 @@ const tiendas = libro
 	: [];
 
 const sinopsisEnIngles = libro?.sinopsisOriginal ? pareceIngles(libro.sinopsisOriginal.join(' ')) : false;
-const volver = consulta ? `/buscar?${new URLSearchParams({ q: consulta })}` : '/';
+const volver = conCiudad(consulta ? `/buscar?${new URLSearchParams({ q: consulta })}` : '/', Astro.url);
 const enlaceEspanol =
 	libro?.edicionEspanol &&
-	`/libro/${libro.obraId}?${new URLSearchParams({ ed: libro.edicionEspanol.edicionId!, ...(consulta && { q: consulta }) })}`;
+	conCiudad(
+		`/libro/${libro.obraId}?${new URLSearchParams({ ed: libro.edicionEspanol.edicionId!, ...(consulta && { q: consulta }) })}`,
+		Astro.url,
+	);
 
 const datos = libro
 	? ([

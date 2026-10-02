@@ -1,5 +1,3 @@
-import type { AstroCookies } from 'astro';
-
 /** Códigos ISO 3166-2:MX (sin el prefijo "MX-"), que también usan Vercel y Cloudflare. */
 export const ESTADOS = {
 	AGU: 'Aguascalientes',
@@ -142,7 +140,8 @@ export const CIUDADES: Ciudad[] = [
 ];
 
 export const CIUDAD_PREDETERMINADA = CIUDADES.find((ciudad) => ciudad.id === 'cuauhtemoc-cdmx')!;
-export const COOKIE_CIUDAD = 'ciudad';
+/** La ciudad elegida viaja en la URL (?ciudad=) en lugar de una cookie, para no guardar nada en el dispositivo. */
+export const PARAM_CIUDAD = 'ciudad';
 
 export function ciudadPorId(id: string | undefined): Ciudad | undefined {
 	return CIUDADES.find((ciudad) => ciudad.id === id);
@@ -180,11 +179,11 @@ export function ciudadMasCercana(lat: number, lon: number): Ciudad {
 export type OrigenUbicacion = 'elegida' | 'red' | 'predeterminada';
 
 /**
- * Decide la ciudad del usuario: primero la que eligió (cookie), luego la región
+ * Decide la ciudad del usuario: primero la que eligió (en la URL), luego la región
  * que manda el hosting (Vercel o Cloudflare) y si no hay nada, CDMX.
  */
-export function obtenerUbicacion(cookies: AstroCookies, headers: Headers): { ciudad: Ciudad; origen: OrigenUbicacion } {
-	const elegida = ciudadPorId(cookies.get(COOKIE_CIUDAD)?.value);
+export function obtenerUbicacion(url: URL, headers: Headers): { ciudad: Ciudad; origen: OrigenUbicacion } {
+	const elegida = ciudadElegida(url);
 	if (elegida) return { ciudad: elegida, origen: 'elegida' };
 
 	const pais = headers.get('x-vercel-ip-country') ?? headers.get('cf-ipcountry');
@@ -195,6 +194,19 @@ export function obtenerUbicacion(cookies: AstroCookies, headers: Headers): { ciu
 	}
 
 	return { ciudad: CIUDAD_PREDETERMINADA, origen: 'predeterminada' };
+}
+
+export function ciudadElegida(url: URL): Ciudad | undefined {
+	return ciudadPorId(url.searchParams.get(PARAM_CIUDAD) ?? undefined);
+}
+
+/** Agrega a un enlace interno la ciudad elegida en la página actual, para no perderla al navegar. */
+export function conCiudad(ruta: string, url: URL): string {
+	const elegida = ciudadElegida(url);
+	if (!elegida) return ruta;
+	const destino = new URL(ruta, url);
+	destino.searchParams.set(PARAM_CIUDAD, elegida.id);
+	return destino.pathname + destino.search + destino.hash;
 }
 
 export function nombreCompleto(ciudad: Ciudad): string {

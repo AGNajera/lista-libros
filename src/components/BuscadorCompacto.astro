@@ -1,14 +1,19 @@
 ---
+import { PARAM_CIUDAD, ciudadElegida } from '../lib/ubicacion';
+
 interface Props {
 	valor?: string;
 }
 
 const { valor = '' } = Astro.props;
+const elegida = ciudadElegida(Astro.url);
 ---
 
 <form class="compacto" action="/buscar" method="get" role="search" transition:persist="buscador">
 	<label class="visualmente-oculto" for="q-barra">Título, autor o ISBN</label>
 	<input id="q-barra" name="q" type="search" required minlength="2" value={valor} placeholder="Título, autor o ISBN" />
+	{/* Deshabilitado no se envía: así la búsqueda solo lleva la ciudad cuando el usuario eligió una. */}
+	<input id="ciudad-barra" type="hidden" name={PARAM_CIUDAD} value={elegida?.id ?? ''} disabled={!elegida} />
 	<button type="submit">Buscar</button>
 </form>
 
@@ -18,6 +23,12 @@ const { valor = '' } = Astro.props;
 		const actual = document.querySelector<HTMLInputElement>('#q-barra');
 		const nuevo = evento.newDocument.querySelector<HTMLInputElement>('#q-barra');
 		if (actual && nuevo) actual.value = nuevo.value;
+		const ciudadActual = document.querySelector<HTMLInputElement>('#ciudad-barra');
+		const ciudadNueva = evento.newDocument.querySelector<HTMLInputElement>('#ciudad-barra');
+		if (ciudadActual && ciudadNueva) {
+			ciudadActual.value = ciudadNueva.value;
+			ciudadActual.disabled = ciudadNueva.disabled;
+		}
 
 		// Buscar otra vez desde los resultados no es cambiar de página: se reemplaza el contenido sin animar.
 		if (evento.from.pathname === '/buscar' && evento.to.pathname === '/buscar') {
