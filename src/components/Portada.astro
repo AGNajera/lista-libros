@@ -1,0 +1,69 @@
+---
+import { urlPortada } from '../lib/openlibrary';
+
+interface Props {
+	obraId: string;
+	portadaId?: number;
+	titulo: string;
+	tamano: 'M' | 'L';
+	carga?: 'lazy' | 'eager';
+}
+
+const { obraId, portadaId, titulo, tamano, carga = 'lazy' } = Astro.props;
+const src = urlPortada(portadaId, tamano);
+---
+
+{/* El mismo transition:name en la lista y en el detalle hace que la portada viaje entre páginas. */}
+<div class:list={['portada', `portada-${tamano}`]} transition:name={`portada-${obraId}`}>
+	{
+		src ? (
+			<img src={src} alt="" loading={carga} decoding="async" width={tamano === 'L' ? 320 : 120} height={tamano === 'L' ? 480 : 180} />
+		) : (
+			<span class="sin-portada" aria-hidden="true">
+				{titulo}
+			</span>
+		)
+	}
+</div>
+
+<style>
+	.portada {
+		aspect-ratio: 2 / 3;
+		overflow: hidden;
+		border-radius: 0.15rem 0.35rem 0.35rem 0.15rem;
+		background: var(--renglon-tenue);
+		box-shadow:
+			inset 3px 0 0 rgb(0 0 0 / 0.25),
+			0 8px 18px -8px var(--sombra);
+	}
+
+	.portada-M {
+		width: 5.25rem;
+	}
+
+	.portada-L {
+		width: min(16rem, 100%);
+	}
+
+	img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+
+	.sin-portada {
+		display: flex;
+		align-items: flex-end;
+		height: 100%;
+		padding: 0.5rem;
+		border-left: 3px solid var(--rosa);
+		font: italic 700 0.75rem / 1.15 var(--font-libro);
+		color: var(--tinta-suave);
+		overflow: hidden;
+	}
+
+	.portada-L .sin-portada {
+		padding: 1.25rem;
+		font-size: var(--paso-2);
+	}
+</style>

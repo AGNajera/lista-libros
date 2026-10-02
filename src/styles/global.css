@@ -1,0 +1,162 @@
+/*
+ * Librero: la ficha catalográfica de biblioteca como idea visual, en negativo.
+ * Mesa azul tinta, fichas con renglones azules tenues, margen rosa mexicano
+ * y sellos de goma para el idioma.
+ */
+:root {
+	color-scheme: dark;
+
+	--mesa: #111b2e;
+	--papel: #18243b;
+	--papel-realce: #1f2e4b;
+	--renglon: #2e4064;
+	--renglon-tenue: #233252;
+	--tinta: #e9edf5;
+	--tinta-suave: #a9b4cc;
+	--tinta-tenue: #6b7a99;
+	/* Rosa mexicano: el sólido para fondos y líneas; el claro para texto sobre la mesa. */
+	--rosa: #d6006f;
+	--rosa-hover: #b8005f;
+	--rosa-texto: #ff7ab9;
+	--aviso-fondo: #33172f;
+	--sello-verde: #62d29c;
+	--gris-sello: #8e99b2;
+	--sombra: rgb(3 8 18 / 0.55);
+
+	--renglon-alto: 1.75rem;
+	--margen-ficha: 4.5rem;
+	--ancho: 68rem;
+
+	--paso--1: 0.875rem;
+	--paso-0: 1.0625rem;
+	--paso-1: 1.25rem;
+	--paso-2: 1.6rem;
+	--paso-3: clamp(1.9rem, 1.4rem + 2vw, 2.6rem);
+	--paso-4: clamp(2.5rem, 1.6rem + 4vw, 4.4rem);
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html {
+	background: var(--mesa);
+	color: var(--tinta);
+	font-family: var(--font-ui);
+	font-size: 100%;
+	-webkit-text-size-adjust: 100%;
+}
+
+body {
+	margin: 0;
+	min-height: 100dvh;
+	display: flex;
+	flex-direction: column;
+	font-size: var(--paso-0);
+	line-height: 1.5;
+	background: var(--mesa);
+}
+
+main {
+	flex: 1;
+	width: 100%;
+	max-width: var(--ancho);
+	margin: 0 auto;
+	padding: 2rem 1rem 4rem;
+}
+
+h1,
+h2,
+h3 {
+	font-family: var(--font-libro);
+	line-height: 1.1;
+	margin: 0;
+	text-wrap: balance;
+}
+
+p {
+	margin: 0;
+}
+
+a {
+	color: inherit;
+	text-decoration-color: var(--rosa);
+	text-decoration-thickness: 0.08em;
+	text-underline-offset: 0.18em;
+}
+
+a:hover {
+	color: var(--rosa-texto);
+}
+
+img {
+	display: block;
+	max-width: 100%;
+}
+
+:focus-visible {
+	outline: 3px solid var(--rosa-texto);
+	outline-offset: 2px;
+}
+
+.visualmente-oculto {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+/* Hoja de papel con renglones: la base de fichas y listas. */
+.papel {
+	background-color: var(--papel);
+	box-shadow:
+		inset 0 1px 0 rgb(255 255 255 / 0.04),
+		0 14px 30px -16px var(--sombra);
+}
+
+.boton {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.4em;
+	min-height: 2.75rem;
+	padding: 0.45rem 1.15rem;
+	border: 2px solid var(--rosa);
+	border-radius: 999px;
+	background: var(--rosa);
+	color: #fff;
+	font: 700 var(--paso-0) / 1 var(--font-ui);
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.boton:hover {
+	background: var(--rosa-hover);
+	border-color: var(--rosa-hover);
+	color: #fff;
+}
+
+.boton--claro {
+	background: transparent;
+	color: var(--rosa-texto);
+}
+
+.boton--claro:hover {
+	background: var(--rosa);
+	color: #fff;
+}
+
+.aviso {
+	padding: 0.85rem 1rem;
+	border-left: 4px solid var(--rosa);
+	background: var(--aviso-fondo);
+	max-width: 62ch;
+}
+
+.aviso a {
+	font-weight: 700;
+}

@@ -1,0 +1,49 @@
+---
+import { ESPANOL, nombreIdioma } from '../lib/idiomas';
+
+interface Props {
+	idioma: string | null;
+	grande?: boolean;
+}
+
+const { idioma, grande = false } = Astro.props;
+const nombre = nombreIdioma(idioma);
+const tipo = idioma === ESPANOL ? 'espanol' : nombre ? 'otro' : 'desconocido';
+const texto = nombre ? `En ${nombre}` : 'Idioma sin confirmar';
+---
+
+<span class:list={['sello', tipo, { grande }]}>{texto}</span>
+
+<style>
+	/* Sello de goma: tinta con borde doble, un poco chueco. */
+	.sello {
+		display: inline-block;
+		flex: none;
+		padding: 0.15rem 0.55rem;
+		border: 3px double currentColor;
+		border-radius: 0.3rem;
+		font: 700 var(--paso--1) / 1.2 var(--font-ui);
+		white-space: nowrap;
+		rotate: -3deg;
+	}
+
+	.espanol {
+		color: var(--sello-verde);
+	}
+
+	.otro {
+		color: var(--rosa-texto);
+		rotate: 2deg;
+	}
+
+	.desconocido {
+		color: var(--gris-sello);
+		rotate: 0deg;
+	}
+
+	.grande {
+		padding: 0.25rem 0.8rem;
+		font-size: var(--paso-0);
+		border-width: 4px;
+	}
+</style>

@@ -1,11 +1,171 @@
 ---
-import Welcome from '../components/Welcome.astro';
+import FichaBusqueda from '../components/FichaBusqueda.astro';
 import Layout from '../layouts/Layout.astro';
+import { TIENDAS } from '../lib/tiendas';
 
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+/**
+ * Libros que aparecen en al menos dos listas de más vendidos de México (consultadas el 2 de octubre de 2026):
+ * «Lo más leído» de Gandhi, «Más vendidos» de Planeta de Libros México, «Top de ventas» de El Sótano
+ * y el recuento anual de 2025 de Amexi. Actualizar cada temporada.
+ * `obraId` es el id de la obra en Open Library; la ficha elige sola la mejor edición en español.
+ */
+const sugerencias = [
+	{ titulo: 'Hábitos atómicos', autor: 'James Clear', obraId: 'OL17930368W' },
+	{ titulo: 'Cómo hacer que te pasen cosas buenas', autor: 'Marian Rojas Estapé', obraId: 'OL20142280W' },
+	{ titulo: 'Recupera tu mente, reconquista tu vida', autor: 'Marian Rojas Estapé', obraId: 'OL43929058W' },
+	{ titulo: 'Amanecer en la cosecha', autor: 'Suzanne Collins', obraId: 'OL43426400W' },
+	{ titulo: 'El jardín de las mariposas', autor: 'Dot Hutchison', obraId: 'OL20036652W' },
+];
 ---
 
 <Layout>
-	<Welcome />
+	<section class="portada-sitio">
+		<h1>¿Dónde compro este libro?</h1>
+		<p class="entrada">
+			Escribe un título y te mostramos dónde conseguirlo en México, impreso o en eBook, con las sucursales más cercanas a
+			ti.
+		</p>
+		<FichaBusqueda />
+		<div class="sugerencias">
+			<p id="titulo-sugerencias">Lo más leído en México</p>
+			<ul aria-labelledby="titulo-sugerencias">
+				{
+					sugerencias.map(({ titulo, autor, obraId }) => (
+						<li>
+							<a href={`/libro/${obraId}`} data-astro-prefetch>
+								{titulo}
+							</a>
+							<span>{autor}</span>
+						</li>
+					))
+				}
+			</ul>
+		</div>
+	</section>
+
+	<section class="tiendas" aria-labelledby="titulo-tiendas">
+		<h2 id="titulo-tiendas">Dónde buscamos</h2>
+		<ul>
+			{
+				TIENDAS.map((tienda) => (
+					<li>
+						<strong>
+							<span class="icono" style={`background: ${tienda.marca.fondo}`}>
+								<img class:list={{ placa: tienda.marca.placa }} src={tienda.marca.icono} alt="" width="18" height="18" />
+							</span>
+							{tienda.nombre}
+						</strong>
+						<span>
+							Vende {tienda.vende}
+							{tienda.sucursales ? ', con sucursales' : ', solo en línea'}
+						</span>
+					</li>
+				))
+			}
+		</ul>
+	</section>
 </Layout>
+
+<style>
+	.portada-sitio {
+		display: grid;
+		gap: 1.25rem;
+		padding-top: clamp(1rem, 5vw, 3.5rem);
+	}
+
+	h1 {
+		max-width: 14ch;
+		font-size: var(--paso-4);
+		font-weight: 800;
+		letter-spacing: -0.02em;
+	}
+
+	.entrada {
+		max-width: 46ch;
+		font-size: var(--paso-1);
+		color: var(--tinta-suave);
+		margin-bottom: 0.75rem;
+	}
+
+	.sugerencias {
+		max-width: 46rem;
+		color: var(--tinta-suave);
+	}
+
+	.sugerencias ul {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4rem 1.75rem;
+		margin: 0.4rem 0 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.sugerencias li {
+		display: grid;
+	}
+
+	.sugerencias a {
+		font: italic var(--paso-1) / 1.3 var(--font-libro);
+		color: var(--tinta);
+	}
+
+	.sugerencias span {
+		font-size: var(--paso--1);
+	}
+
+	.tiendas {
+		margin-top: 4rem;
+		max-width: 46rem;
+	}
+
+	h2 {
+		font-size: var(--paso-2);
+		margin-bottom: 0.75rem;
+	}
+
+	.tiendas ul {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		border-top: 1px solid var(--renglon);
+	}
+
+	.tiendas li {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: space-between;
+		gap: 0 1rem;
+		padding: 0.55rem 0;
+		border-bottom: 1px solid var(--renglon);
+	}
+
+	.tiendas li > span {
+		color: var(--tinta-suave);
+	}
+
+	strong {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.6rem;
+	}
+
+	.icono {
+		display: grid;
+		place-items: center;
+		width: 1.6rem;
+		height: 1.6rem;
+		border-radius: 0.35rem;
+	}
+
+	.icono img {
+		width: 18px;
+		height: 18px;
+		border-radius: 3px;
+		object-fit: contain;
+	}
+
+	.icono .placa {
+		background: #ffffff;
+	}
+</style>
