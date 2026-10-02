@@ -5,7 +5,7 @@ import { nombreCompleto, obtenerUbicacion } from '../lib/ubicacion';
 const { ciudad } = obtenerUbicacion(Astro.cookies, Astro.request.headers);
 ---
 
-<form class="ficha papel contorno-mano" action="/buscar" method="get" role="search" transition:name="buscador">
+<form class="ficha papel contorno-mano" action="/buscar" method="get" role="search">
 	<p class="margen" aria-hidden="true">
 		<span>Para</span>
 		{ciudad.nombre.replace(/\s*\(.*\)/, '')}

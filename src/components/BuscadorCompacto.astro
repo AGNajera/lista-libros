@@ -6,11 +6,25 @@ interface Props {
 const { valor = '' } = Astro.props;
 ---
 
-<form class="compacto" action="/buscar" method="get" role="search" transition:name="buscador">
+<form class="compacto" action="/buscar" method="get" role="search" transition:persist="buscador">
 	<label class="visualmente-oculto" for="q-barra">Título, autor o ISBN</label>
 	<input id="q-barra" name="q" type="search" required minlength="2" value={valor} placeholder="Título, autor o ISBN" />
 	<button type="submit">Buscar</button>
 </form>
+
+<script>
+	document.addEventListener('astro:before-swap', (evento) => {
+		// La barra persiste entre páginas, así que el texto se toma de la página nueva (importa al ir hacia atrás).
+		const actual = document.querySelector<HTMLInputElement>('#q-barra');
+		const nuevo = evento.newDocument.querySelector<HTMLInputElement>('#q-barra');
+		if (actual && nuevo) actual.value = nuevo.value;
+
+		// Buscar otra vez desde los resultados no es cambiar de página: se reemplaza el contenido sin animar.
+		if (evento.from.pathname === '/buscar' && evento.to.pathname === '/buscar') {
+			evento.viewTransition.skipTransition();
+		}
+	});
+</script>
 
 <style>
 	.compacto {
