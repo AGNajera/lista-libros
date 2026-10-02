@@ -7,7 +7,7 @@ export default defineConfig({
 	// Las búsquedas y la ubicación del usuario cambian en cada petición,
 	// así que las páginas se renderizan en el servidor.
 	output: 'server',
-	adapter: vercel(),
+	adapter: vercel({ webAnalytics: { enabled: true } }),
 	prefetch: { defaultStrategy: 'hover' },
 	fonts: [
 		{
