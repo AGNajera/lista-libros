@@ -8,7 +8,7 @@ interface Props {
 }
 
 const { tienda, href, ebook = false } = Astro.props;
-const colores = ebook && tienda.marcaEbook ? tienda.marcaEbook : tienda.marca;
+const colores = (ebook && tienda.ebook?.marca) || tienda.marca;
 const texto = ebook ? `eBook en ${tienda.nombreCorto}` : `Ver en ${tienda.nombreCorto}`;
 ---
 

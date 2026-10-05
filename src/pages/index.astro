@@ -1,7 +1,7 @@
 ---
 import FichaBusqueda from '../components/FichaBusqueda.astro';
 import Layout from '../layouts/Layout.astro';
-import { TIENDAS } from '../lib/tiendas';
+import { TIENDAS_EBOOK, TIENDAS_IMPRESO } from '../lib/tiendas';
 import { conCiudad } from '../lib/ubicacion';
 
 /**
@@ -46,9 +46,10 @@ const sugerencias = [
 
 	<section class="tiendas" aria-labelledby="titulo-tiendas">
 		<h2 id="titulo-tiendas">Dónde buscamos</h2>
+		<h3>Libro físico</h3>
 		<ul>
 			{
-				TIENDAS.map((tienda) => (
+				TIENDAS_IMPRESO.map((tienda) => (
 					<li>
 						<strong>
 							<span class="icono" style={`background: ${tienda.marca.fondo}`}>
@@ -56,10 +57,23 @@ const sugerencias = [
 							</span>
 							{tienda.nombre}
 						</strong>
-						<span>
-							Vende {tienda.vende}
-							{tienda.sucursales ? ', con sucursales' : ', solo en línea'}
-						</span>
+						<span>{tienda.sucursales ? 'Con sucursales' : 'Solo en línea'}</span>
+					</li>
+				))
+			}
+		</ul>
+		<h3>eBook</h3>
+		<ul>
+			{
+				TIENDAS_EBOOK.map((tienda) => (
+					<li>
+						<strong>
+							<span class="icono" style={`background: ${tienda.marca.fondo}`}>
+								<img class:list={{ placa: tienda.marca.placa }} src={tienda.marca.icono} alt="" width="18" height="18" />
+							</span>
+							{tienda.ebook.nombre ?? tienda.nombre}
+						</strong>
+						<span>{tienda.ebook.lectura}</span>
 					</li>
 				))
 			}
@@ -123,6 +137,11 @@ const sugerencias = [
 	h2 {
 		font-size: var(--paso-2);
 		margin-bottom: 0.75rem;
+	}
+
+	.tiendas h3 {
+		font-size: var(--paso-1);
+		margin: 1.5rem 0 0.5rem;
 	}
 
 	.tiendas ul {
