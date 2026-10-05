@@ -179,6 +179,6 @@ img {
 	inset: -4px;
 	z-index: 1;
 	border: 20px solid transparent;
-	border-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Cg fill='none' stroke='%238a97b4' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M1.5 5.2C8 4.1 14 4.6 20 4C60 2.4 110 6.1 150 3.7S175 4 180 4C186 4 192 3.5 198.2 5'/%3E%3Cpath d='M195.6 1.6C196.1 8 195.5 14 196 20C197.6 70 194.4 120 196.5 160S196 176 196 180C196 186 196.7 192 195 198.6'/%3E%3Cpath d='M198.4 195.4C192 196.1 186 196.3 180 196C140 197.7 90 194.2 50 196.3S25 196 20 196C14 196 8 195.3 2.2 196.9'/%3E%3Cpath d='M4.6 198.2C4 192 4.5 186 4 180C2.5 140 5.7 90 3.6 50S4 25 4 20C4 14 3.4 8 5 2.4'/%3E%3C/g%3E%3C/svg%3E") 20 / 20px round;
+	border-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Cg fill='none' stroke='%238a97b4' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M1.5 5.2C8 4.1 14 4 20 4C45 4 60 2.6 85 3.4S130 5.6 150 4.6S172 4 180 4C186 4 192 3.5 198.2 5'/%3E%3Cpath d='M195.6 1.6C196.1 8 196 14 196 20C196 45 197.4 62 196.7 88S194.6 128 195.5 152S196 172 196 180C196 186 196.7 192 195 198.6'/%3E%3Cpath d='M198.4 195.4C192 196.1 186 196 180 196C155 196 138 197.3 112 196.5S70 194.8 48 195.6S28 196 20 196C14 196 8 195.3 2.2 196.9'/%3E%3Cpath d='M4.6 198.2C4 192 4 186 4 180C4 156 2.7 140 3.4 115S5.4 72 4.5 50S4 28 4 20C4 14 3.4 8 5 2.4'/%3E%3C/g%3E%3C/svg%3E") 20 / 20px round;
 	pointer-events: none;
 }

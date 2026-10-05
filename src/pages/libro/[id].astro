@@ -271,8 +271,9 @@ const datos = libro
 
 	.cabecera {
 		display: grid;
-		grid-template-columns: minmax(10rem, 16rem) minmax(0, 1fr);
-		gap: 2.5rem;
+		/* La portada se encoge con la pantalla; desde ~54rem queda en sus 16rem de siempre. */
+		grid-template-columns: clamp(9rem, 30vw, 16rem) minmax(0, 1fr);
+		gap: clamp(1.25rem, 4vw, 2.5rem);
 		align-items: start;
 	}
 
@@ -288,6 +289,7 @@ const datos = libro
 		font-weight: 800;
 		letter-spacing: -0.02em;
 		max-width: 20ch;
+		overflow-wrap: break-word;
 	}
 
 	.subtitulo {
@@ -433,13 +435,29 @@ const datos = libro
 		font-weight: 700;
 	}
 
+	/* Tablet: el botón pasa a la derecha, en una columna pareja, y el detalle queda bajo el nombre. */
 	@media (max-width: 52rem) {
 		.tienda {
-			grid-template-columns: 1fr;
+			grid-template-columns: minmax(0, 1fr) 14.5rem;
+			row-gap: 0.3rem;
+		}
+
+		.tienda-nombre,
+		.tienda-detalle {
+			grid-column: 1;
+		}
+
+		.tienda-acciones {
+			grid-column: 2;
+			grid-row: 1 / span 2;
+		}
+
+		.tienda-acciones :global(.boton-tienda) {
+			flex: 1;
 		}
 	}
 
-	@media (max-width: 40rem) {
+	@media (max-width: 34rem) {
 		.cabecera {
 			grid-template-columns: minmax(0, 1fr);
 			gap: 1.5rem;
@@ -449,8 +467,23 @@ const datos = libro
 			width: 11rem;
 		}
 
-		.tienda-acciones :global(.boton-tienda) {
-			flex: 1;
+		.tienda {
+			grid-template-columns: minmax(0, 1fr);
+			row-gap: 0.75rem;
+			padding: 1rem;
+		}
+
+		.tienda-acciones {
+			grid-column: auto;
+			grid-row: auto;
+		}
+
+		.sinopsis {
+			margin-top: 2.25rem;
+		}
+
+		.compra {
+			margin-top: 2.5rem;
 		}
 	}
 </style>

@@ -116,4 +116,26 @@ const { ciudad } = obtenerUbicacion(Astro.url, Astro.request.headers);
 	.estado:empty {
 		display: none;
 	}
+
+	/* En teléfono la etiqueta sube y la lista comparte renglón con el botón, para no gastar tres renglones. */
+	@media (max-width: 34rem) {
+		.ubicacion {
+			flex: 1 1 100%;
+			display: grid;
+			grid-template-columns: minmax(0, 1fr) auto;
+			gap: 0.15rem 0.75rem;
+		}
+
+		label,
+		.estado {
+			grid-column: 1 / -1;
+		}
+
+		select {
+			width: 100%;
+			max-width: none;
+			/* Con menos de 16px, iOS acerca la página al abrir la lista. */
+			font-size: 1rem;
+		}
+	}
 </style>
