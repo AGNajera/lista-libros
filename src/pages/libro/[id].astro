@@ -7,7 +7,17 @@ import Layout from '../../layouts/Layout.astro';
 import { ESPANOL, avisoIdioma, nombreIdioma } from '../../lib/idiomas';
 import { obtenerLibro, type DetalleLibro } from '../../lib/openlibrary';
 import { pareceIngles } from '../../lib/sinopsis';
-import { TIENDAS, consultaParaTiendas, esDeSuCatalogo, tituloParaTiendas, urlSucursales } from '../../lib/tiendas';
+import {
+	TIENDAS,
+	TIENDAS_EBOOK,
+	TIENDAS_IMPRESO,
+	consultaParaTiendas,
+	esDeSuCatalogo,
+	primeroSuCatalogo,
+	tituloParaTiendas,
+	urlEbook,
+	urlSucursales,
+} from '../../lib/tiendas';
 import { conCiudad, nombreCompleto, obtenerUbicacion } from '../../lib/ubicacion';
 
 const obraId = Astro.params.id ?? '';
@@ -35,9 +45,17 @@ const soloTitulo =
 		? new Intl.ListFormat('es').format(TIENDAS.filter((tienda) => tienda.soloTitulo).map((tienda) => tienda.nombreCorto))
 		: '';
 
-// La tienda cuyo grupo editorial publica esta edición va primero.
-const tiendas = libro
-	? [...TIENDAS].sort((a, b) => Number(esDeSuCatalogo(b, libro.editorial)) - Number(esDeSuCatalogo(a, libro.editorial)))
+const impresos = libro ? primeroSuCatalogo(TIENDAS_IMPRESO, libro.editorial) : [];
+// Las tiendas sin buscador web solo aparecen si encontraron el libro.
+const ebooks = libro
+	? (
+			await Promise.all(
+				primeroSuCatalogo(TIENDAS_EBOOK, libro.editorial).map(async (tienda) => ({
+					tienda,
+					href: await urlEbook(tienda, consultaParaTiendas(libro, tienda)),
+				})),
+			)
+		).filter((ebook): ebook is typeof ebook & { href: string } => Boolean(ebook.href))
 	: [];
 
 const sinopsisEnIngles = libro?.sinopsisOriginal ? pareceIngles(libro.sinopsisOriginal.join(' ')) : false;
@@ -158,49 +176,77 @@ const datos = libro
 				<section class="compra" aria-labelledby="titulo-compra">
 					<div class="compra-encabezado">
 						<h2 id="titulo-compra">Dónde comprarlo</h2>
-						<p>
-							Sucursales cerca de <strong>{lugar}</strong>.{' '}
-							{origen === 'predeterminada' ? (
-								<a href="#ciudad">Elige tu ciudad</a>
-							) : (
-								<a href="#ciudad">Cambiar ciudad</a>
-							)}
-						</p>
 						<p class="nota">
 							Buscamos «{consultaTiendas}» en cada tienda{soloTitulo && ` (en ${soloTitulo}, solo «${tituloTiendas}»)`}; ahí
 							verás precio, existencias y otras ediciones.
 						</p>
 					</div>
 
-					<ul class="tiendas papel contorno-mano">
-						{tiendas.map((tienda) => {
-							const sucursales = urlSucursales(tienda, ciudad);
-							const deSuCatalogo = esDeSuCatalogo(tienda, libro.editorial);
-							const busqueda = consultaParaTiendas(libro, tienda);
-							return (
-								<li class:list={['tienda', { destacada: deSuCatalogo }]}>
-									<div class="tienda-nombre">
-										<h3>{tienda.nombre}</h3>
-										<p>Vende {tienda.vende}</p>
-										{deSuCatalogo && <p class="catalogo">{libro.editorial} es de su grupo editorial</p>}
-									</div>
-									<div class="tienda-acciones">
-										<BotonTienda tienda={tienda} href={tienda.buscar(busqueda)} />
-										{tienda.buscarEbook && <BotonTienda tienda={tienda} href={tienda.buscarEbook(busqueda)} ebook />}
-									</div>
-									<p class="tienda-sucursales">
-										{sucursales ? (
-											<a href={sucursales} target="_blank" rel="noopener noreferrer">
-												Sucursales en {ciudad.nombre.replace(/\s*\(.*\)/, '')}
-											</a>
-										) : (
-											'Solo en línea, con envío a domicilio'
-										)}
-									</p>
-								</li>
-							);
-						})}
-					</ul>
+					<section class="formato" aria-labelledby="titulo-impreso">
+						<div class="formato-encabezado">
+							<h3 id="titulo-impreso">Libro físico</h3>
+							<p>
+								Sucursales cerca de <strong>{lugar}</strong>.{' '}
+								{origen === 'predeterminada' ? (
+									<a href="#ciudad">Elige tu ciudad</a>
+								) : (
+									<a href="#ciudad">Cambiar ciudad</a>
+								)}
+							</p>
+						</div>
+
+						<ul class="tiendas papel contorno-mano">
+							{impresos.map((tienda) => {
+								const sucursales = urlSucursales(tienda, ciudad);
+								const deSuCatalogo = esDeSuCatalogo(tienda, libro.editorial);
+								return (
+									<li class:list={['tienda', { destacada: deSuCatalogo }]}>
+										<div class="tienda-nombre">
+											<h4>{tienda.nombre}</h4>
+											{deSuCatalogo && <p class="catalogo">{libro.editorial} es de su grupo editorial</p>}
+										</div>
+										<div class="tienda-acciones">
+											<BotonTienda tienda={tienda} href={tienda.buscar(consultaParaTiendas(libro, tienda))} />
+										</div>
+										<p class="tienda-detalle">
+											{sucursales ? (
+												<a href={sucursales} target="_blank" rel="noopener noreferrer">
+													Sucursales en {ciudad.nombre.replace(/\s*\(.*\)/, '')}
+												</a>
+											) : (
+												'Solo en línea, con envío a domicilio'
+											)}
+										</p>
+									</li>
+								);
+							})}
+						</ul>
+					</section>
+
+					<section class="formato" aria-labelledby="titulo-ebook">
+						<div class="formato-encabezado">
+							<h3 id="titulo-ebook">eBook</h3>
+							<p>Se descarga al momento, sin envío ni sucursal.</p>
+						</div>
+
+						<ul class="tiendas papel contorno-mano">
+							{ebooks.map(({ tienda, href }) => {
+								const deSuCatalogo = esDeSuCatalogo(tienda, libro.editorial);
+								return (
+									<li class:list={['tienda', { destacada: deSuCatalogo }]}>
+										<div class="tienda-nombre">
+											<h4>{tienda.ebook.nombre ?? tienda.nombre}</h4>
+											{deSuCatalogo && <p class="catalogo">{libro.editorial} es de su grupo editorial</p>}
+										</div>
+										<div class="tienda-acciones">
+											<BotonTienda tienda={tienda} href={href} ebook />
+										</div>
+										<p class="tienda-detalle">{tienda.ebook.lectura}</p>
+									</li>
+								);
+							})}
+						</ul>
+					</section>
 				</section>
 			</article>
 		)
@@ -343,7 +389,21 @@ const datos = libro
 		background: var(--papel-realce);
 	}
 
+	.formato + .formato {
+		margin-top: 2.25rem;
+	}
+
+	.formato-encabezado {
+		display: grid;
+		gap: 0.2rem;
+		margin-bottom: 0.75rem;
+	}
+
 	h3 {
+		font-size: var(--paso-1);
+	}
+
+	h4 {
 		font-size: var(--paso-1);
 	}
 
@@ -363,12 +423,12 @@ const datos = libro
 		gap: 0.5rem;
 	}
 
-	.tienda-sucursales {
+	.tienda-detalle {
 		font-size: var(--paso--1);
 		color: var(--tinta-suave);
 	}
 
-	.tienda-sucursales a {
+	.tienda-detalle a {
 		color: var(--tinta);
 		font-weight: 700;
 	}
