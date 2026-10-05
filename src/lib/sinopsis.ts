@@ -41,26 +41,35 @@ export function limpiarDescripcion(texto: string): string[] {
 		.filter(Boolean);
 }
 
-/** Cuenta palabras muy frecuentes de cada idioma: una heurística sencilla pero suficiente para sinopsis. */
-function contarPalabrasFrecuentes(texto: string) {
+/**
+ * Palabras muy frecuentes de cada idioma. Se dejan fuera las que comparten el español y sus vecinos
+ * («que», «se», «por», «de»): con ellas, una sinopsis en portugués pasaba por española.
+ */
+const FRECUENTES = {
+	espanol: ['el', 'la', 'los', 'las', 'y', 'del', 'una', 'un', 'con', 'en', 'su', 'sus', 'es', 'al', 'lo', 'más', 'pero'],
+	ingles: ['the', 'and', 'of', 'is', 'with', 'his', 'her', 'that', 'to', 'in'],
+	portugues: ['o', 'os', 'as', 'e', 'do', 'da', 'dos', 'das', 'um', 'uma', 'com', 'em', 'não', 'na', 'seu', 'sua', 'seus', 'é', 'ao', 'mais', 'são'],
+	frances: ['les', 'et', 'des', 'du', 'une', 'dans', 'est', 'au', 'il', 'elle', 'pour', 'sur', 'qui', 'ce'],
+	italiano: ['il', 'gli', 'e', 'di', 'della', 'che', 'per', 'non', 'è', 'sono', 'nel', 'i'],
+} as const;
+
+type IdiomaTexto = keyof typeof FRECUENTES;
+
+/** El idioma con más palabras frecuentes en el texto, o null si hay empate: una heurística sencilla pero suficiente para sinopsis. */
+function idiomaProbable(texto: string): IdiomaTexto | null {
 	const palabras = texto.toLowerCase().match(/\p{L}+/gu) ?? [];
-	let ingles = 0;
-	let espanol = 0;
-	for (const palabra of palabras) {
-		if (['the', 'and', 'of', 'is', 'with', 'his', 'her', 'that', 'to', 'in'].includes(palabra)) ingles++;
-		if (['el', 'la', 'los', 'las', 'y', 'que', 'del', 'una', 'con', 'en', 'se', 'por'].includes(palabra)) espanol++;
-	}
-	return { ingles, espanol };
+	const conteo = (Object.keys(FRECUENTES) as IdiomaTexto[])
+		.map((idioma) => ({ idioma, total: palabras.filter((p) => (FRECUENTES[idioma] as readonly string[]).includes(p)).length }))
+		.sort((a, b) => b.total - a.total);
+	return conteo[0].total > conteo[1].total ? conteo[0].idioma : null;
 }
 
 export function pareceEspanol(texto: string): boolean {
-	const { ingles, espanol } = contarPalabrasFrecuentes(texto);
-	return espanol > ingles;
+	return idiomaProbable(texto) === 'espanol';
 }
 
 export function pareceIngles(texto: string): boolean {
-	const { ingles, espanol } = contarPalabrasFrecuentes(texto);
-	return ingles > espanol;
+	return idiomaProbable(texto) === 'ingles';
 }
 
 // ---------- Wikipedia en español ----------

@@ -117,7 +117,8 @@ const datos = libro
 								{avisoIdioma(libro.idioma)}{' '}
 								{enlaceEspanol ? (
 									<>
-										Hay {libro.totalEdicionesEspanol === 1 ? 'una edición' : `${libro.totalEdicionesEspanol} ediciones`} en
+										Hay {libro.edicionesIncompletas ? 'al menos ' : ''}
+										{libro.totalEdicionesEspanol === 1 ? 'una edición' : `${libro.totalEdicionesEspanol} ediciones`} en
 										español: <a href={enlaceEspanol}>ver «{libro.edicionEspanol!.titulo}»</a>.
 									</>
 								) : (
