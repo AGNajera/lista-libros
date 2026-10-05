@@ -74,7 +74,8 @@ export const TIENDAS: Tienda[] = [
 		nombreCorto: 'Penguin',
 		marca: { fondo: '#ff5a00', texto: '#ffffff', hover: '#e04f00', icono: '/tiendas/penguin.png', placa: true },
 		vende: 'impreso',
-		buscar: (q) => `https://www.penguinlibros.com/mx/busqueda?controller=search&s=${e(q)}`,
+		// Su buscador es una capa de Motive que se abre sobre la portada; la ruta anterior, /mx/busqueda, ya responde 403.
+		buscar: (q) => `https://www.penguinlibros.com/mx/?mot_q=${e(q)}`,
 		sellos:
 			/penguin|random house|alfaguara|debolsillo|lumen|grijalbo|plaza (&|y) jan[eé]s|aguilar|taurus|reservoir|montena|beascoa|sudamericana|debate|suma de letras|b de blok|nube de tinta|caballo de troya/i,
 	},
