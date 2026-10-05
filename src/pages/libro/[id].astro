@@ -56,7 +56,6 @@ const datos = libro
 			['Año', libro.anio],
 			['Páginas', libro.paginas],
 			['Idioma', nombreIdioma(libro.idioma) ?? 'Sin confirmar'],
-			['ISBN', libro.isbn],
 		].filter(([, valor]) => valor) as [string, string | number][])
 	: [];
 ---
