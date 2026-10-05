@@ -4,6 +4,17 @@ import { PARAM_CIUDAD, ciudadElegida, nombreCompleto, obtenerUbicacion } from '.
 /** El buscador grande de la portada, dibujado como una ficha catalográfica. */
 const { ciudad } = obtenerUbicacion(Astro.url, Astro.request.headers);
 const elegida = ciudadElegida(Astro.url);
+
+/** Títulos que se van escribiendo en el campo vacío, como ejemplos de qué buscar. */
+const ejemplos = [
+	'Pedro Páramo',
+	'Cien años de soledad',
+	'Como agua para chocolate',
+	'Las batallas en el desierto',
+	'El laberinto de la soledad',
+	'Temporada de huracanes',
+	'Rayuela',
+];
 ---
 
 <form class="ficha papel contorno-mano" action="/buscar" method="get" role="search">
@@ -14,7 +25,11 @@ const elegida = ciudadElegida(Astro.url);
 	{elegida && <input type="hidden" name={PARAM_CIUDAD} value={elegida.id} />}
 	<label class="encabezado" for="q">Título, autor o ISBN</label>
 	<div class="renglon-entrada">
-		<input id="q" name="q" type="search" required minlength="2" autocomplete="off" placeholder="Pedro Páramo" />
+		<div class="campo">
+			{/* El placeholder va en blanco: solo sirve para que :placeholder-shown diga si el campo está vacío. */}
+			<input id="q" name="q" type="search" required minlength="2" autocomplete="off" placeholder=" " />
+			<span class="ejemplo" aria-hidden="true" data-ejemplos={JSON.stringify(ejemplos)}>{ejemplos[0]}</span>
+		</div>
 	</div>
 	<p class="renglon nota">
 		Buscamos primero ediciones en español y te avisamos si el libro solo está en otro idioma.
@@ -24,6 +39,43 @@ const elegida = ciudadElegida(Astro.url);
 		<button class="boton" type="submit">Buscar libro</button>
 	</div>
 </form>
+
+<script>
+	const pausa = (ms: number) => new Promise((listo) => setTimeout(listo, ms));
+
+	/** Borra el ejemplo letra por letra y escribe el siguiente, mientras la ficha siga en la página. */
+	async function rotarEjemplos(ejemplo: HTMLElement) {
+		const titulos: string[] = JSON.parse(ejemplo.dataset.ejemplos ?? '[]');
+		let indice = 0;
+		while (titulos.length > 1) {
+			await pausa(2600);
+			for (let n = titulos[indice].length - 1; n >= 0; n--) {
+				ejemplo.textContent = titulos[indice].slice(0, n);
+				await pausa(28);
+			}
+			await pausa(350);
+			if (!ejemplo.isConnected) return;
+			indice = (indice + 1) % titulos.length;
+			for (let n = 1; n <= titulos[indice].length; n++) {
+				ejemplo.textContent = titulos[indice].slice(0, n);
+				await pausa(60);
+			}
+		}
+	}
+
+	document.addEventListener('astro:page-load', () => {
+		const ejemplo = document.querySelector<HTMLElement>('.ficha .ejemplo');
+		if (!ejemplo || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+		rotarEjemplos(ejemplo);
+	});
+
+	document.addEventListener('astro:before-swap', (evento) => {
+		// Buscar desde la ficha cambia de página sin animar; de la portada a /buscar solo se llega por ella.
+		if (evento.from.pathname === '/' && evento.to.pathname === '/buscar') {
+			evento.viewTransition.skipTransition();
+		}
+	});
+</script>
 
 <style>
 	.ficha {
@@ -103,10 +155,25 @@ const elegida = ciudadElegida(Astro.url);
 		appearance: none;
 	}
 
-	input::placeholder {
+	.campo {
+		position: relative;
+	}
+
+	/* El ejemplo se dibuja encima del campo vacío y deja pasar los clics. */
+	.ejemplo {
+		position: absolute;
+		inset: 0;
+		padding: 0.2rem 0 0.3rem;
+		overflow: hidden;
+		white-space: nowrap;
+		text-overflow: ellipsis;
 		color: var(--tinta-tenue);
-		font-weight: 400;
-		font-style: italic;
+		font: italic 400 var(--paso-3) / 1.15 var(--font-libro);
+		pointer-events: none;
+	}
+
+	input:not(:placeholder-shown) + .ejemplo {
+		display: none;
 	}
 
 	input:focus-visible {
