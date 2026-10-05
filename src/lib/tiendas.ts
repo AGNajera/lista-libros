@@ -128,7 +128,7 @@ export const TIENDAS: Tienda[] = [
 		id: 'kobo',
 		nombre: 'Rakuten Kobo',
 		nombreCorto: 'Kobo',
-		marca: { fondo: '#bf0000', texto: '#ffffff', hover: '#a00000', icono: '/tiendas/kobo.svg', placa: false },
+		marca: { fondo: '#bf0000', texto: '#ffffff', hover: '#a00000', icono: '/tiendas/kobo.png', placa: true },
 		ebook: {
 			buscar: (q) => `https://www.kobo.com/mx/es/search?query=${e(q)}`,
 			lectura: 'Se lee en un Kobo o en su app',
@@ -138,7 +138,7 @@ export const TIENDAS: Tienda[] = [
 		id: 'googleplay',
 		nombre: 'Google Play Libros',
 		nombreCorto: 'Google Play',
-		marca: { fondo: '#01875f', texto: '#ffffff', hover: '#056449', icono: '/tiendas/googleplay.svg', placa: false },
+		marca: { fondo: '#01875f', texto: '#ffffff', hover: '#056449', icono: '/tiendas/googleplay.png', placa: true },
 		ebook: {
 			buscar: (q) => `https://play.google.com/store/search?q=${e(q)}&c=books&gl=MX&hl=es`,
 			lectura: 'Se lee en la app Google Play Libros o en el navegador',
@@ -148,7 +148,7 @@ export const TIENDAS: Tienda[] = [
 		id: 'apple',
 		nombre: 'Apple Books',
 		nombreCorto: 'Apple Books',
-		marca: { fondo: '#1d1d1f', texto: '#ffffff', hover: '#3a3a3c', icono: '/tiendas/applebooks.svg', placa: false },
+		marca: { fondo: '#1d1d1f', texto: '#ffffff', hover: '#3a3a3c', icono: '/tiendas/applebooks.png', placa: true },
 		ebook: {
 			resolver: fichaEnAppleBooks,
 			lectura: 'Se lee en la app Libros de iPhone, iPad o Mac',
