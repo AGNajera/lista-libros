@@ -1,5 +1,5 @@
 ---
-import { PARAM_CIUDAD, ciudadElegida, nombreCompleto, obtenerUbicacion } from '../lib/ubicacion';
+import { PARAM_CIUDAD, ciudadElegida, nombreCompleto, nombreCorto, obtenerUbicacion } from '../lib/ubicacion';
 
 /** El buscador grande de la portada, dibujado como una ficha catalográfica. */
 const { ciudad } = obtenerUbicacion(Astro.url, Astro.request.headers);
@@ -20,7 +20,7 @@ const ejemplos = [
 <form class="ficha papel contorno-mano" action="/buscar" method="get" role="search">
 	<p class="margen" aria-hidden="true">
 		<span>Para</span>
-		{ciudad.nombre.replace(/\s*\(.*\)/, '')}
+		{nombreCorto(ciudad)}
 	</p>
 	{elegida && <input type="hidden" name={PARAM_CIUDAD} value={elegida.id} />}
 	<label class="encabezado" for="q">Título, autor o ISBN</label>

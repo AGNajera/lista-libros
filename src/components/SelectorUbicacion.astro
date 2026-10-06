@@ -1,5 +1,5 @@
 ---
-import { ESTADOS, ciudadesPorEstado, obtenerUbicacion } from '../lib/ubicacion';
+import { ESTADOS, ciudadesPorEstado, nombreCorto, obtenerUbicacion } from '../lib/ubicacion';
 
 const { ciudad } = obtenerUbicacion(Astro.url, Astro.request.headers);
 ---
@@ -11,7 +11,7 @@ const { ciudad } = obtenerUbicacion(Astro.url, Astro.request.headers);
 			ciudadesPorEstado().map(([estado, ciudades]) => (
 				<optgroup label={ESTADOS[estado]}>
 					{ciudades.map((c) => (
-						<option value={c.id} selected={c.id === ciudad.id}>
+						<option value={c.id} selected={c.id === ciudad.id} data-completo={c.nombre} data-corto={nombreCorto(c)}>
 							{c.nombre}
 						</option>
 					))}
@@ -65,6 +65,16 @@ const { ciudad } = obtenerUbicacion(Astro.url, Astro.request.headers);
 			{ maximumAge: 600_000, timeout: 10_000 },
 		);
 	});
+
+	// En teléfono la lista comparte renglón con «Usar mi ubicación» y un nombre como «Cuauhtémoc (Centro)» no cabe: va sin la aclaración.
+	const telefono = matchMedia('(max-width: 34rem)');
+	function ajustarNombres() {
+		for (const opcion of document.querySelectorAll<HTMLOptionElement>('[data-ciudad] option')) {
+			opcion.textContent = (telefono.matches ? opcion.dataset.corto : opcion.dataset.completo) ?? opcion.textContent;
+		}
+	}
+	document.addEventListener('astro:page-load', ajustarNombres);
+	telefono.addEventListener('change', ajustarNombres);
 </script>
 
 <style>

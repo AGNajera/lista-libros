@@ -18,7 +18,7 @@ import {
 	urlEbook,
 	urlSucursales,
 } from '../../lib/tiendas';
-import { conCiudad, nombreCompleto, obtenerUbicacion } from '../../lib/ubicacion';
+import { conCiudad, nombreCompleto, nombreCorto, obtenerUbicacion } from '../../lib/ubicacion';
 
 const obraId = Astro.params.id ?? '';
 const edicionId = Astro.url.searchParams.get('ed') ?? undefined;
@@ -211,7 +211,7 @@ const datos = libro
 										<p class="tienda-detalle">
 											{sucursales ? (
 												<a href={sucursales} target="_blank" rel="noopener noreferrer">
-													Sucursales en {ciudad.nombre.replace(/\s*\(.*\)/, '')}
+													Sucursales en {nombreCorto(ciudad)}
 												</a>
 											) : (
 												'Solo en línea, con envío a domicilio'
