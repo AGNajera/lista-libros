@@ -1,4 +1,5 @@
 ---
+import { CONSULTA_MINIMA } from '../lib/openlibrary';
 import { PARAM_CIUDAD, ciudadElegida, nombreCompleto, obtenerUbicacion } from '../lib/ubicacion';
 
 /** El buscador grande de la portada, dibujado como una ficha catalográfica. */
@@ -27,7 +28,7 @@ const ejemplos = [
 	<div class="renglon-entrada">
 		<div class="campo">
 			{/* El placeholder va en blanco: solo sirve para que :placeholder-shown diga si el campo está vacío. */}
-			<input id="q" name="q" type="search" required minlength="2" autocomplete="off" placeholder=" " />
+			<input id="q" name="q" type="search" required minlength={CONSULTA_MINIMA} autocomplete="off" placeholder=" " />
 			<span class="ejemplo" aria-hidden="true" data-ejemplos={JSON.stringify(ejemplos)}>{ejemplos[0]}</span>
 		</div>
 	</div>

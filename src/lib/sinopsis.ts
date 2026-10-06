@@ -24,7 +24,8 @@ export function limpiarDescripcion(texto: string): string[] {
 		.replace(/&(#x?[\da-f]+|\w+);/gi, (entidad, codigo: string) => {
 			if (codigo[0] === '#') {
 				const numero = codigo[1].toLowerCase() === 'x' ? parseInt(codigo.slice(2), 16) : Number(codigo.slice(1));
-				return Number.isFinite(numero) ? String.fromCodePoint(numero) : entidad;
+				// Más allá del último carácter de Unicode, fromCodePoint lanza un error: la entidad se deja como llegó.
+				return numero <= 0x10ffff ? String.fromCodePoint(numero) : entidad;
 			}
 			return ENTIDADES[codigo.toLowerCase()] ?? entidad;
 		})
