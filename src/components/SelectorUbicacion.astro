@@ -27,10 +27,14 @@ const { ciudad } = obtenerUbicacion(Astro.url, Astro.request.headers);
 	import { navigate } from 'astro:transitions/client';
 	import { PARAM_CIUDAD, ciudadMasCercana } from '../lib/ubicacion';
 
-	function guardarCiudad(id: string) {
+	function guardarCiudad(id: string, control: string) {
 		// La ciudad va en la URL y no en una cookie: no se guarda nada en el dispositivo.
 		const url = new URL(location.href);
 		url.searchParams.set(PARAM_CIUDAD, id);
+		// La cabecera se vuelve a dibujar y el foco se iría al inicio del documento: se devuelve al control que se usó.
+		document.addEventListener('astro:page-load', () => document.querySelector<HTMLElement>(control)?.focus(), {
+			once: true,
+		});
 		// Se vuelve a pedir la misma página para que el servidor arme los enlaces de la nueva ciudad.
 		navigate(url.pathname + url.search, { history: 'replace' });
 	}
@@ -38,7 +42,7 @@ const { ciudad } = obtenerUbicacion(Astro.url, Astro.request.headers);
 	// Los listeners van en document para que sigan funcionando después de cada transición.
 	document.addEventListener('change', (evento) => {
 		const select = evento.target;
-		if (select instanceof HTMLSelectElement && select.matches('[data-ciudad]')) guardarCiudad(select.value);
+		if (select instanceof HTMLSelectElement && select.matches('[data-ciudad]')) guardarCiudad(select.value, '[data-ciudad]');
 	});
 
 	document.addEventListener('click', (evento) => {
@@ -56,7 +60,7 @@ const { ciudad } = obtenerUbicacion(Astro.url, Astro.request.headers);
 		navigator.geolocation.getCurrentPosition(
 			({ coords }) => {
 				// Solo viaja el id de la ciudad más cercana; las coordenadas no salen del navegador.
-				guardarCiudad(ciudadMasCercana(coords.latitude, coords.longitude).id);
+				guardarCiudad(ciudadMasCercana(coords.latitude, coords.longitude).id, '[data-geolocalizar]');
 			},
 			() => {
 				boton.disabled = false;

@@ -52,6 +52,9 @@ export type TiendaEbook = Tienda & { ebook: Ebook };
 
 const e = encodeURIComponent;
 
+/** Los sellos se buscan como palabras completas: «diana» no debe encontrarse dentro de «Indiana University Press». */
+const sellos = (nombres: string) => new RegExp(`(?<![\\p{L}\\p{N}])(?:${nombres})(?![\\p{L}\\p{N}])`, 'iu');
+
 // Formatos de búsqueda verificados en octubre de 2026.
 export const TIENDAS: Tienda[] = [
 	{
@@ -87,8 +90,9 @@ export const TIENDAS: Tienda[] = [
 			lectura: 'El formato eBook se elige en la ficha del libro',
 		},
 		soloTitulo: true,
-		sellos:
-			/planeta|booket|destino|seix barral|paid[oó]s|diana|cr[ií]tica|espasa|ariel|tusquets|minotauro|temas de hoy|deusto|emec[eé]|joaqu[ií]n mortiz|crossbooks|alienta|zenith/i,
+		sellos: sellos(
+			'planeta|booket|destino|seix barral|paid[oó]s|diana|cr[ií]tica|espasa|ariel|tusquets|minotauro|temas de hoy|deusto|emec[eé]|joaqu[ií]n mortiz|crossbooks|alienta|zenith',
+		),
 	},
 	{
 		id: 'penguin',
@@ -97,8 +101,9 @@ export const TIENDAS: Tienda[] = [
 		marca: { fondo: '#ff5a00', texto: '#ffffff', hover: '#e04f00', icono: '/tiendas/penguin.webp', placa: true },
 		// Su buscador es una capa de Motive que se abre sobre la portada; la ruta anterior, /mx/busqueda, ya responde 403.
 		buscar: (q) => `https://www.penguinlibros.com/mx/?mot_q=${e(q)}`,
-		sellos:
-			/penguin|random house|alfaguara|debolsillo|lumen|grijalbo|plaza (&|y) jan[eé]s|aguilar|taurus|reservoir|montena|beascoa|sudamericana|debate|suma de letras|b de blok|nube de tinta|caballo de troya/i,
+		sellos: sellos(
+			'penguin|random house|alfaguara|debolsillo|lumen|grijalbo|plaza (&|y) jan[eé]s|aguilar|taurus|reservoir|montena|beascoa|sudamericana|debate|suma de letras|b de blok|nube de tinta|caballo de troya',
+		),
 	},
 	{
 		id: 'sanborns',

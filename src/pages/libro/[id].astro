@@ -27,7 +27,10 @@ const consulta = Astro.url.searchParams.get('q') ?? '';
 let libro: DetalleLibro | null = null;
 let fallo = false;
 try {
-	libro = await obtenerLibro(obraId, edicionId);
+	const encontrado = await obtenerLibro(obraId, edicionId);
+	// Los enlaces a una obra fusionada llevan a la obra en la que quedó, con la misma edición, búsqueda y ciudad.
+	if (encontrado && 'fusionadaEn' in encontrado) return Astro.redirect(`/libro/${encontrado.fusionadaEn}${Astro.url.search}`, 301);
+	libro = encontrado;
 	if (!libro) Astro.response.status = 404;
 } catch (error) {
 	console.error('Detalle fallido', error);
@@ -117,7 +120,8 @@ const datos = libro
 								{avisoIdioma(libro.idioma)}{' '}
 								{enlaceEspanol ? (
 									<>
-										Hay {libro.totalEdicionesEspanol === 1 ? 'una edición' : `${libro.totalEdicionesEspanol} ediciones`} en
+										Hay {libro.edicionesIncompletas ? 'al menos ' : ''}
+										{libro.totalEdicionesEspanol === 1 ? 'una edición' : `${libro.totalEdicionesEspanol} ediciones`} en
 										español: <a href={enlaceEspanol}>ver «{libro.edicionEspanol!.titulo}»</a>.
 									</>
 								) : (
