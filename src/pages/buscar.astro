@@ -4,11 +4,12 @@ import Portada from '../components/Portada.astro';
 import SelloIdioma from '../components/SelloIdioma.astro';
 import Layout from '../layouts/Layout.astro';
 import { ESPANOL } from '../lib/idiomas';
-import { PAGINA_MAXIMA, POR_PAGINA, buscarLibros, type ResultadoBusqueda } from '../lib/openlibrary';
+import { PAGINA_MAXIMA, buscarLibros, paginaPedida, paginasDe, type ResultadoBusqueda } from '../lib/openlibrary';
 import { conCiudad } from '../lib/ubicacion';
 
 const consulta = Astro.url.searchParams.get('q')?.trim() ?? '';
-const pagina = Math.min(PAGINA_MAXIMA, Math.max(1, Math.floor(Number(Astro.url.searchParams.get('pagina'))) || 1));
+const pedida = paginaPedida(Astro.url.searchParams.get('pagina'));
+const pagina = Math.min(pedida, PAGINA_MAXIMA);
 
 if (consulta.length < 2) return Astro.redirect(conCiudad('/', Astro.url));
 
@@ -22,7 +23,7 @@ try {
 
 const libros = resultado?.libros ?? [];
 const hayEspanol = libros.some((libro) => libro.idioma === ESPANOL);
-const totalPaginas = resultado ? Math.ceil(resultado.total / POR_PAGINA) : 0;
+const totalPaginas = resultado ? paginasDe(resultado.total) : 0;
 
 const enlacePagina = (n: number) =>
 	conCiudad(`/buscar?${new URLSearchParams({ q: consulta, ...(n > 1 && { pagina: String(n) }) })}`, Astro.url);
@@ -30,7 +31,7 @@ const enlaceLibro = (obraId: string, edicionId?: string) =>
 	conCiudad(`/libro/${obraId}?${new URLSearchParams({ ...(edicionId && { ed: edicionId }), q: consulta })}`, Astro.url);
 
 // Una página más allá de la última (un enlace viejo o escrito a mano) lleva a la última que sí existe.
-if (totalPaginas > 0 && pagina > totalPaginas) return Astro.redirect(enlacePagina(totalPaginas));
+if (totalPaginas > 0 && pedida > totalPaginas) return Astro.redirect(enlacePagina(totalPaginas));
 ---
 
 <Layout titulo={`Resultados de «${consulta}»`}>

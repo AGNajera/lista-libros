@@ -75,8 +75,18 @@ const CAMPOS = [
 ].join(',');
 
 export const POR_PAGINA = 20;
-/** Con páginas mucho más altas, Open Library responde con un error en lugar de una lista vacía. */
-export const PAGINA_MAXIMA = 5000;
+/** En una búsqueda muy amplia, Open Library responde con un error al pedir las páginas más lejanas (la 5000 de «C++» falla). */
+export const PAGINA_MAXIMA = 500;
+
+/** La página que pide la URL: un entero desde 1, aunque el parámetro falte o no sea un número. */
+export function paginaPedida(valor: string | null): number {
+	return Math.max(1, Math.floor(Number(valor)) || 1);
+}
+
+/** Las páginas que se pueden recorrer de una búsqueda: las que hay, sin pasar del tope. */
+export function paginasDe(total: number): number {
+	return Math.min(PAGINA_MAXIMA, Math.ceil(total / POR_PAGINA));
+}
 
 export interface ResultadoBusqueda {
 	libros: Libro[];

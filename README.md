@@ -35,6 +35,7 @@ Los enlaces de las tiendas son búsquedas por título y autor; cada tienda confi
 | `pnpm install`      | Instala dependencias                        |
 | `pnpm dev`          | Servidor de desarrollo en `localhost:4321`  |
 | `pnpm build`        | Compila para Vercel en `./.vercel/output/`  |
+| `pnpm test`         | Corre las pruebas de `src/lib/` con Vitest  |
 
 El sitio usa el adaptador de Vercel, que no tiene vista previa local: la versión compilada se prueba en un despliegue de vista previa.
 
