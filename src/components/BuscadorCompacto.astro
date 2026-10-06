@@ -1,4 +1,5 @@
 ---
+import { CONSULTA_MINIMA } from '../lib/openlibrary';
 import { PARAM_CIUDAD, ciudadElegida } from '../lib/ubicacion';
 
 interface Props {
@@ -11,7 +12,7 @@ const elegida = ciudadElegida(Astro.url);
 
 <form class="compacto" action="/buscar" method="get" role="search" transition:persist="buscador">
 	<label class="visualmente-oculto" for="q-barra">Título, autor o ISBN</label>
-	<input id="q-barra" name="q" type="search" required minlength="2" value={valor} placeholder="Título, autor o ISBN" />
+	<input id="q-barra" name="q" type="search" required minlength={CONSULTA_MINIMA} value={valor} placeholder="Título, autor o ISBN" />
 	{/* Deshabilitado no se envía: así la búsqueda solo lleva la ciudad cuando el usuario eligió una. */}
 	<input id="ciudad-barra" type="hidden" name={PARAM_CIUDAD} value={elegida?.id ?? ''} disabled={!elegida} />
 	<button type="submit">Buscar</button>

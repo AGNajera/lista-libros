@@ -3,22 +3,26 @@ import BuscadorCompacto from '../components/BuscadorCompacto.astro';
 import Portada from '../components/Portada.astro';
 import SelloIdioma from '../components/SelloIdioma.astro';
 import Layout from '../layouts/Layout.astro';
+import { ErrorHttp } from '../lib/http';
 import { ESPANOL } from '../lib/idiomas';
-import { PAGINA_MAXIMA, buscarLibros, paginaPedida, paginasDe, type ResultadoBusqueda } from '../lib/openlibrary';
+import { CONSULTA_MINIMA, PAGINA_MAXIMA, buscarLibros, paginaPedida, paginasDe, type ResultadoBusqueda } from '../lib/openlibrary';
 import { conCiudad } from '../lib/ubicacion';
 
 const consulta = Astro.url.searchParams.get('q')?.trim() ?? '';
 const pedida = paginaPedida(Astro.url.searchParams.get('pagina'));
 const pagina = Math.min(pedida, PAGINA_MAXIMA);
 
-if (consulta.length < 2) return Astro.redirect(conCiudad('/', Astro.url));
+if (consulta.length < CONSULTA_MINIMA) return Astro.redirect(conCiudad('/', Astro.url));
 
 let resultado: ResultadoBusqueda | undefined;
+// Open Library no acepta algunas consultas («the», por ejemplo): reintentar no sirve, hay que cambiar la búsqueda.
+let rechazada = false;
 try {
 	resultado = await buscarLibros(consulta, pagina);
 } catch (error) {
 	console.error('Búsqueda fallida', error);
-	Astro.response.status = 502;
+	rechazada = error instanceof ErrorHttp && (error.estado === 400 || error.estado === 422);
+	Astro.response.status = rechazada ? 400 : 502;
 }
 
 const libros = resultado?.libros ?? [];
@@ -43,7 +47,15 @@ if (totalPaginas > 0 && pedida > totalPaginas) return Astro.redirect(enlacePagin
 	</h1>
 
 	{
-		!resultado && (
+		rechazada && (
+			<p class="aviso" role="alert">
+				El catálogo de Open Library no acepta esta búsqueda. Prueba con el título completo o agrega el autor.
+			</p>
+		)
+	}
+
+	{
+		!resultado && !rechazada && (
 			<p class="aviso" role="alert">
 				El catálogo de Open Library no respondió. Espera unos segundos y <a href={enlacePagina(pagina)}>vuelve a buscar</a>.
 			</p>

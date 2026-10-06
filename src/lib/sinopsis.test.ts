@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { pareceEspanol, pareceIngles } from './sinopsis';
+import { limpiarDescripcion, pareceEspanol, pareceIngles } from './sinopsis';
 
 // La misma sinopsis de Drácula, redactada para estas pruebas en cada idioma.
 const ESPANOL =
@@ -79,5 +79,19 @@ describe('pareceIngles', () => {
 
 	it('no decide nada cuando el texto no trae palabras frecuentes', () => {
 		expect(pareceIngles('Gothic novel.')).toBe(false);
+	});
+});
+
+describe('limpiarDescripcion', () => {
+	it('quita HTML y Markdown y convierte las entidades', () => {
+		expect(limpiarDescripcion('<p>Hola &amp; <b>adiós</b> &#233; &#x1F600;</p>Un **clásico** de [Rulfo](https://example.com).')).toEqual([
+			'Hola & adiós é 😀',
+			'Un clásico de Rulfo.',
+		]);
+	});
+
+	// Open Library lo edita cualquiera: una entidad fuera de Unicode lanzaba un error y tumbaba la ficha.
+	it.each(['&#99999999;', '&#x110000;'])('deja como llegó la entidad imposible %s', (entidad) => {
+		expect(limpiarDescripcion(`Antes ${entidad} después`)).toEqual([`Antes ${entidad} después`]);
 	});
 });

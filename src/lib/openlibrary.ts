@@ -35,6 +35,11 @@ export interface DetalleLibro extends Libro {
 	edicionesIncompletas: boolean;
 }
 
+/** Open Library fusiona obras duplicadas: el id viejo solo dice en cuál quedó. */
+export interface ObraFusionada {
+	fusionadaEn: string;
+}
+
 // ---------- Búsqueda ----------
 
 interface DocBusqueda {
@@ -74,6 +79,8 @@ const CAMPOS = [
 	'editions.publish_date',
 ].join(',');
 
+/** Open Library rechaza las consultas de menos de 3 caracteres. */
+export const CONSULTA_MINIMA = 3;
 export const POR_PAGINA = 20;
 /** En una búsqueda muy amplia, Open Library responde con un error al pedir las páginas más lejanas (la 5000 de «C++» falla). */
 export const PAGINA_MAXIMA = 500;
@@ -134,6 +141,10 @@ function libroDesdeBusqueda(doc: DocBusqueda): Libro {
 type Texto = string | { value: string };
 
 interface Obra {
+	/** `/type/work`, o `/type/redirect` y `/type/delete` cuando la obra se fusionó con otra o se borró. */
+	type?: { key: string };
+	/** La obra en la que quedó una fusionada, p. ej. /works/OL15400381W. */
+	location?: string;
 	title: string;
 	description?: Texto;
 	covers?: number[];
@@ -143,6 +154,7 @@ interface Obra {
 
 interface Edicion {
 	key: string;
+	works?: { key: string }[];
 	title: string;
 	subtitle?: string;
 	publishers?: string[];
@@ -161,7 +173,7 @@ const LIMITE_EDICIONES = 100;
 export const ID_OBRA = /^OL\d+W$/;
 export const ID_EDICION = /^OL\d+M$/;
 
-export async function obtenerLibro(obraId: string, edicionId?: string): Promise<DetalleLibro | null> {
+export async function obtenerLibro(obraId: string, edicionId?: string): Promise<DetalleLibro | ObraFusionada | null> {
 	if (!ID_OBRA.test(obraId)) return null;
 
 	let obra: Obra;
@@ -171,6 +183,11 @@ export async function obtenerLibro(obraId: string, edicionId?: string): Promise<
 		if (error instanceof ErrorHttp && error.estado === 404) return null;
 		throw error;
 	}
+	if (obra.type?.key === '/type/redirect') {
+		const destino = idDesdeClave(obra.location ?? '');
+		return ID_OBRA.test(destino) && destino !== obraId ? { fusionadaEn: destino } : null;
+	}
+	if (obra.type?.key === '/type/delete') return null;
 
 	const [{ entries: ediciones, size }, autores] = await Promise.all([
 		pedir<{ entries: Edicion[]; size?: number }>(`/works/${obraId}/editions.json?limit=${LIMITE_EDICIONES}`),
@@ -182,6 +199,8 @@ export async function obtenerLibro(obraId: string, edicionId?: string): Promise<
 	if (!edicion && edicionId && ID_EDICION.test(edicionId)) {
 		// La obra tiene más de 100 ediciones y la elegida no vino en la primera página.
 		edicion = await pedir<Edicion>(`/books/${edicionId}.json`).catch(() => undefined);
+		// Un enlace mal armado puede traer la edición de otro libro: se ignora y se elige una de esta obra.
+		if (!edicion?.works?.some((o) => idDesdeClave(o.key) === obraId)) edicion = undefined;
 	}
 
 	const enEspanol = ediciones.filter((e) => idiomaDeEdicion(e) === ESPANOL);
