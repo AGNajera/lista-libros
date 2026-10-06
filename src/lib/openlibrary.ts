@@ -31,6 +31,8 @@ export interface DetalleLibro extends Libro {
 	/** La mejor edición en español cuando la elegida está en otro idioma. */
 	edicionEspanol?: Libro;
 	totalEdicionesEspanol: number;
+	/** La obra tiene más ediciones de las que se revisaron: el total en español es un mínimo. */
+	edicionesIncompletas: boolean;
 }
 
 // ---------- Búsqueda ----------
@@ -73,6 +75,18 @@ const CAMPOS = [
 ].join(',');
 
 export const POR_PAGINA = 20;
+/** En una búsqueda muy amplia, Open Library responde con un error al pedir las páginas más lejanas (la 5000 de «C++» falla). */
+export const PAGINA_MAXIMA = 500;
+
+/** La página que pide la URL: un entero desde 1, aunque el parámetro falte o no sea un número. */
+export function paginaPedida(valor: string | null): number {
+	return Math.max(1, Math.floor(Number(valor)) || 1);
+}
+
+/** Las páginas que se pueden recorrer de una búsqueda: las que hay, sin pasar del tope. */
+export function paginasDe(total: number): number {
+	return Math.min(PAGINA_MAXIMA, Math.ceil(total / POR_PAGINA));
+}
 
 export interface ResultadoBusqueda {
 	libros: Libro[];
@@ -141,6 +155,9 @@ interface Edicion {
 	description?: Texto;
 }
 
+/** Open Library entrega las ediciones de una obra por páginas; solo se pide la primera. */
+const LIMITE_EDICIONES = 100;
+
 export const ID_OBRA = /^OL\d+W$/;
 export const ID_EDICION = /^OL\d+M$/;
 
@@ -155,10 +172,11 @@ export async function obtenerLibro(obraId: string, edicionId?: string): Promise<
 		throw error;
 	}
 
-	const [{ entries: ediciones }, autores] = await Promise.all([
-		pedir<{ entries: Edicion[] }>(`/works/${obraId}/editions.json?limit=100`),
+	const [{ entries: ediciones, size }, autores] = await Promise.all([
+		pedir<{ entries: Edicion[]; size?: number }>(`/works/${obraId}/editions.json?limit=${LIMITE_EDICIONES}`),
 		obtenerAutores(obra),
 	]);
+	const edicionesIncompletas = (size ?? ediciones.length) > ediciones.length;
 
 	let edicion = edicionId && ID_EDICION.test(edicionId) ? ediciones.find((e) => idDesdeClave(e.key) === edicionId) : undefined;
 	if (!edicion && edicionId && ID_EDICION.test(edicionId)) {
@@ -166,7 +184,13 @@ export async function obtenerLibro(obraId: string, edicionId?: string): Promise<
 		edicion = await pedir<Edicion>(`/books/${edicionId}.json`).catch(() => undefined);
 	}
 
-	const enEspanol = ediciones.filter((e) => idiomaDeEdicion(e) === ESPANOL).sort((a, b) => puntaje(b) - puntaje(a));
+	const enEspanol = ediciones.filter((e) => idiomaDeEdicion(e) === ESPANOL);
+	if (edicionesIncompletas) {
+		// Las ediciones en español pueden haber quedado fuera de las que se recibieron.
+		const delBuscador = await edicionEspanolDelBuscador(obraId);
+		if (delBuscador && !enEspanol.some((e) => e.key === delBuscador.key)) enEspanol.push(delBuscador);
+	}
+	enEspanol.sort((a, b) => puntaje(b) - puntaje(a));
 	edicion ??= enEspanol[0] ?? ediciones.find((e) => e.isbn_13 || e.isbn_10) ?? ediciones[0];
 
 	const base = libroDesdeEdicion(obraId, obra, edicion, autores);
@@ -197,7 +221,31 @@ export async function obtenerLibro(obraId: string, edicionId?: string): Promise<
 		sinopsisOriginal: sinopsis ? undefined : descripciones[0],
 		edicionEspanol: edicionEspanol && libroDesdeEdicion(obraId, obra, edicionEspanol, autores),
 		totalEdicionesEspanol: enEspanol.length,
+		edicionesIncompletas,
 	};
+}
+
+/** La edición en español que elige el buscador de Open Library, que sí revisa todas las ediciones de la obra. */
+async function edicionEspanolDelBuscador(obraId: string): Promise<Edicion | undefined> {
+	const params = new URLSearchParams({
+		q: `key:/works/${obraId}`,
+		lang: 'es',
+		limit: '1',
+		fields: 'key,editions,editions.key,editions.language,editions.isbn',
+	});
+	try {
+		const datos = await pedir<{ docs: DocBusqueda[] }>(`/search.json?${params}`);
+		const elegida = datos.docs[0]?.editions?.docs[0];
+		if (!elegida || idiomaConRespaldo(elegida.language?.[0], elegida.isbn ?? []) !== ESPANOL) return undefined;
+		const id = idDesdeClave(elegida.key);
+		if (!ID_EDICION.test(id)) return undefined;
+		const edicion = await pedir<Edicion>(`/books/${id}.json`);
+		// La ficha de la edición a veces llega sin idioma; el buscador ya confirmó que está en español.
+		return idiomaDeEdicion(edicion) === ESPANOL ? edicion : { ...edicion, languages: [{ key: `/languages/${ESPANOL}` }] };
+	} catch (error) {
+		console.error('No se pudo pedir la edición en español al buscador', error);
+		return undefined;
+	}
 }
 
 async function obtenerAutores(obra: Obra): Promise<string[]> {

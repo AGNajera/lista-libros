@@ -41,26 +41,43 @@ export function limpiarDescripcion(texto: string): string[] {
 		.filter(Boolean);
 }
 
-/** Cuenta palabras muy frecuentes de cada idioma: una heurística sencilla pero suficiente para sinopsis. */
-function contarPalabrasFrecuentes(texto: string) {
+/**
+ * Palabras muy frecuentes de cada idioma. «que», «se», «por» y «de» no van en ninguna lista: con ellas,
+ * una sinopsis en portugués pasaba por española. Las demás que el español comparte con un vecino («la», «un», «en»)
+ * van en las dos listas, al inicio de la del vecino: su texto suma esas y además las propias, y así gana.
+ * Las listas de los vecinos no llevan palabras que también se usan en español («dos», «les», «sur») o en inglés
+ * («as», «do» y la «i» del italiano, que es su «I»): con ellas, un texto corto en español o en inglés pasaba por otro idioma.
+ */
+const FRECUENTES = {
+	espanol: ['el', 'la', 'los', 'las', 'y', 'del', 'una', 'un', 'con', 'en', 'su', 'sus', 'es', 'al', 'lo', 'más', 'pero'],
+	ingles: ['the', 'and', 'of', 'is', 'with', 'his', 'her', 'that', 'to', 'in'],
+	portugues: ['o', 'os', 'e', 'da', 'das', 'um', 'uma', 'com', 'em', 'não', 'na', 'seu', 'sua', 'seus', 'é', 'ao', 'mais', 'são'],
+	frances: ['la', 'un', 'en', 'y', 'et', 'des', 'du', 'une', 'dans', 'est', 'au', 'il', 'elle', 'pour', 'qui', 'ce'],
+	italiano: ['la', 'un', 'una', 'con', 'su', 'al', 'lo', 'del', 'il', 'gli', 'e', 'di', 'della', 'che', 'per', 'non', 'è', 'sono', 'nel'],
+	catalan: ['el', 'la', 'un', 'una', 'en', 'es', 'al', 'del', 'els', 'dels', 'als', 'amb', 'és', 'per', 'més', 'però', 'seva', 'aquest', 'aquesta', 'són'],
+} as const;
+
+type IdiomaTexto = keyof typeof FRECUENTES;
+
+/** Cuántas palabras frecuentes de cada idioma hay en el texto: una heurística sencilla pero suficiente para sinopsis. */
+function contarFrecuentes(texto: string): Record<IdiomaTexto, number> {
 	const palabras = texto.toLowerCase().match(/\p{L}+/gu) ?? [];
-	let ingles = 0;
-	let espanol = 0;
-	for (const palabra of palabras) {
-		if (['the', 'and', 'of', 'is', 'with', 'his', 'her', 'that', 'to', 'in'].includes(palabra)) ingles++;
-		if (['el', 'la', 'los', 'las', 'y', 'que', 'del', 'una', 'con', 'en', 'se', 'por'].includes(palabra)) espanol++;
+	const conteo = {} as Record<IdiomaTexto, number>;
+	for (const idioma of Object.keys(FRECUENTES) as IdiomaTexto[]) {
+		conteo[idioma] = palabras.filter((p) => (FRECUENTES[idioma] as readonly string[]).includes(p)).length;
 	}
-	return { ingles, espanol };
+	return conteo;
 }
 
 export function pareceEspanol(texto: string): boolean {
-	const { ingles, espanol } = contarPalabrasFrecuentes(texto);
-	return espanol > ingles;
+	const { espanol, ...otros } = contarFrecuentes(texto);
+	// En empate gana el español: un texto corto puede traer solo palabras que comparte con un vecino.
+	return espanol > 0 && espanol >= Math.max(...Object.values(otros));
 }
 
 export function pareceIngles(texto: string): boolean {
-	const { ingles, espanol } = contarPalabrasFrecuentes(texto);
-	return ingles > espanol;
+	const { ingles, ...otros } = contarFrecuentes(texto);
+	return ingles > Math.max(...Object.values(otros));
 }
 
 // ---------- Wikipedia en español ----------
