@@ -209,6 +209,11 @@ export function conCiudad(ruta: string, url: URL): string {
 	return destino.pathname + destino.search + destino.hash;
 }
 
+/** El nombre sin la aclaración entre paréntesis: «Cuauhtémoc (Centro)» queda en «Cuauhtémoc». */
+export function nombreCorto(ciudad: Ciudad): string {
+	return ciudad.nombre.replace(/\s*\(.*\)/, '');
+}
+
 export function nombreCompleto(ciudad: Ciudad): string {
 	const estado = ESTADOS[ciudad.estado];
 	return ciudad.estado === 'CMX' ? `${ciudad.nombre}, CDMX` : `${ciudad.nombre}, ${estado}`;

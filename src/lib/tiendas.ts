@@ -1,6 +1,6 @@
 import { fichaEnAppleBooks } from './apple';
 import type { Libro } from './openlibrary';
-import { ESTADOS, type Ciudad } from './ubicacion';
+import { ESTADOS, nombreCorto, type Ciudad } from './ubicacion';
 
 /** Colores del botón principal de cada tienda, tomados de sus sitios (octubre de 2026). */
 export interface Marca {
@@ -178,7 +178,7 @@ export function consultaParaTiendas(libro: Libro, tienda?: Tienda): string {
 
 export function urlSucursales(tienda: Tienda, ciudad: Ciudad): string | undefined {
 	if (!tienda.sucursales) return undefined;
-	const lugar = `${ciudad.nombre.replace(/\s*\(.*\)/, '')}, ${ESTADOS[ciudad.estado]}`;
+	const lugar = `${nombreCorto(ciudad)}, ${ESTADOS[ciudad.estado]}`;
 	return `https://www.google.com/maps/search/?api=1&query=${e(`${tienda.sucursales} ${lugar}`)}`;
 }
 
