@@ -6,6 +6,9 @@
 :root {
 	color-scheme: dark;
 
+	/* La interfaz usa la misma fuente que los títulos; la variable se conserva por si vuelven a separarse. */
+	--font-ui: var(--font-libro);
+
 	--mesa: #111b2e;
 	--papel: #18243b;
 	--papel-realce: #1f2e4b;

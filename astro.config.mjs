@@ -25,13 +25,5 @@ export default defineConfig({
 			},
 			fallbacks: ['Georgia', 'serif'],
 		},
-		{
-			provider: fontProviders.google(),
-			name: 'Alegreya Sans',
-			cssVariable: '--font-ui',
-			weights: [400, 500, 700],
-			styles: ['normal'],
-			fallbacks: ['system-ui', 'sans-serif'],
-		},
 	],
 });
