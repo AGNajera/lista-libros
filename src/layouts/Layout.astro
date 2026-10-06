@@ -25,7 +25,14 @@ const {
 		<meta name="theme-color" content="#111b2e" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<title>{titulo ? `${titulo} | Librero` : 'Librero: dónde comprar libros en México'}</title>
-		<Font cssVariable="--font-libro" preload />
+		{/* Solo se precargan los dos estilos que se ven al abrir: la negrita de los títulos y la cursiva de la ficha. */}
+		<Font
+			cssVariable="--font-libro"
+			preload={[
+				{ weight: 700, style: 'normal' },
+				{ weight: 400, style: 'italic' },
+			]}
+		/>
 		<Font cssVariable="--font-ui" />
 		<ClientRouter />
 	</head>
