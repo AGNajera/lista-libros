@@ -1,7 +1,7 @@
 ---
 import { ESTADOS, ciudadesPorEstado, nombreCorto, obtenerUbicacion } from '../lib/ubicacion';
 
-const { ciudad } = obtenerUbicacion(Astro.url, Astro.request.headers);
+const { ciudad } = obtenerUbicacion(Astro.url, Astro.request);
 ---
 
 <div class="ubicacion">

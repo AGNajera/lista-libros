@@ -1,13 +1,15 @@
 // @ts-check
 import { defineConfig, fontProviders } from 'astro/config';
-import vercel from '@astrojs/vercel';
+import cloudflare from '@astrojs/cloudflare';
 
 // https://astro.build/config
 export default defineConfig({
 	// Las búsquedas y la ubicación del usuario cambian en cada petición,
 	// así que las páginas se renderizan en el servidor.
 	output: 'server',
-	adapter: vercel({ webAnalytics: { enabled: true } }),
+	// El sitio no usa sesiones ni <Image>, así que no hace falta un KV ni Cloudflare Images.
+	adapter: cloudflare({ imageService: 'passthrough' }),
+	session: false,
 	prefetch: { defaultStrategy: 'hover' },
 	fonts: [
 		{

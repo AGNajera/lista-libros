@@ -38,7 +38,7 @@ try {
 	Astro.response.status = 502;
 }
 
-const { ciudad, origen } = obtenerUbicacion(Astro.url, Astro.request.headers);
+const { ciudad, origen } = obtenerUbicacion(Astro.url, Astro.request);
 const lugar = nombreCompleto(ciudad);
 const tituloTiendas = libro ? tituloParaTiendas(libro) : '';
 const consultaTiendas = libro ? consultaParaTiendas(libro) : '';

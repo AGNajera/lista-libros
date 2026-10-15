@@ -3,7 +3,7 @@ import { CONSULTA_MINIMA } from '../lib/openlibrary';
 import { PARAM_CIUDAD, ciudadElegida, nombreCompleto, nombreCorto, obtenerUbicacion } from '../lib/ubicacion';
 
 /** El buscador grande de la portada, dibujado como una ficha catalográfica. */
-const { ciudad } = obtenerUbicacion(Astro.url, Astro.request.headers);
+const { ciudad } = obtenerUbicacion(Astro.url, Astro.request);
 const elegida = ciudadElegida(Astro.url);
 
 /** Títulos que se van escribiendo en el campo vacío, como ejemplos de qué buscar. */
