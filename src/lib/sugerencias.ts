@@ -63,12 +63,27 @@ function recortar(texto: string, largo: number): string {
 	return punto > largo * 0.3 ? corte.slice(0, punto + 1) : `${corte.slice(0, corte.lastIndexOf(' '))}…`;
 }
 
-export async function cargarSugerencias(largoResumen = 320): Promise<Sugerido[]> {
-	return Promise.all(
+/** Lo que se espera a Open Library antes de mostrar el estante con lo que haya llegado. */
+const LIMITE_MS = 4000;
+
+/**
+ * Los datos de cada sugerencia. El autor ya se sabe, así que no se pide, y con `nota` tampoco se busca la sinopsis
+ * en Wikipedia. Un libro que no llega a tiempo sale solo con título y autor, sin portada.
+ */
+export async function cargarSugerencias(largoResumen: number): Promise<Sugerido[]> {
+	let temporizador: ReturnType<typeof setTimeout> | undefined;
+	const limite = new Promise<'tarde'>((resolver) => {
+		temporizador = setTimeout(() => resolver('tarde'), LIMITE_MS);
+	});
+
+	const sugeridos = await Promise.all(
 		SUGERENCIAS.map(async ({ nota, ...sugerencia }) => {
 			let libro: Awaited<ReturnType<typeof obtenerLibro>> = null;
 			try {
-				libro = await obtenerLibro(sugerencia.obraId);
+				const pedido = obtenerLibro(sugerencia.obraId, undefined, { autores: [sugerencia.autor], wikipedia: !nota });
+				const respuesta = await Promise.race([pedido, limite]);
+				if (respuesta === 'tarde') console.error('Sugerencia sin datos a tiempo', sugerencia.obraId);
+				else libro = respuesta;
 			} catch (error) {
 				console.error('Sugerencia sin datos', sugerencia.obraId, error);
 			}
@@ -85,6 +100,8 @@ export async function cargarSugerencias(largoResumen = 320): Promise<Sugerido[]>
 			};
 		}),
 	);
+	clearTimeout(temporizador);
+	return sugeridos;
 }
 
 /** «Planeta, 2019. 320 páginas.», como en el pie de imprenta de una ficha. La razón social («S. A. de C. V.») sobra. */
