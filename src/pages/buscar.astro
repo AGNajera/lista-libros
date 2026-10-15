@@ -38,7 +38,8 @@ const enlaceLibro = (obraId: string, edicionId?: string) =>
 if (totalPaginas > 0 && pedida > totalPaginas) return Astro.redirect(enlacePagina(totalPaginas));
 ---
 
-<Layout titulo={`Resultados de «${consulta}»`}>
+{/* Google pide no indexar los resultados de un buscador interno; sí sigue los enlaces a las fichas. */}
+<Layout titulo={`Resultados de «${consulta}»`} indexar={false}>
 	<BuscadorCompacto slot="barra" valor={consulta} />
 
 	<h1>

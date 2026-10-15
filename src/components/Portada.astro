@@ -11,13 +11,15 @@ interface Props {
 
 const { obraId, portadaId, titulo, tamano, carga = 'lazy' } = Astro.props;
 const src = urlPortada(portadaId, tamano);
+// En la lista el título ya está junto a la portada; en la ficha el texto alternativo ayuda a que Google asocie la imagen al libro.
+const alt = tamano === 'L' ? `Portada de «${titulo}»` : '';
 ---
 
 {/* El mismo transition:name en la lista y en el detalle hace que la portada viaje entre páginas. */}
 <div class:list={['portada', `portada-${tamano}`]} transition:name={`portada-${obraId}`}>
 	{
 		src ? (
-			<img src={src} alt="" loading={carga} decoding="async" width={tamano === 'L' ? 320 : 120} height={tamano === 'L' ? 480 : 180} />
+			<img src={src} {alt} loading={carga} decoding="async" width={tamano === 'L' ? 320 : 120} height={tamano === 'L' ? 480 : 180} />
 		) : (
 			<span class="sin-portada contorno-mano" aria-hidden="true">
 				{titulo}

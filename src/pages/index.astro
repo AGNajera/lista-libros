@@ -25,9 +25,12 @@ const ejemplos = [
 	{ titulo: 'Balún Canán', autor: 'Rosario Castellanos' },
 ];
 const rotulo = ({ titulo, autor }: (typeof ejemplos)[number]) => `${titulo}, ${autor}`;
+
+// Le dice a Google cómo se llama el sitio para mostrarlo en los resultados.
+const sitio = { '@type': 'WebSite', name: 'Librero', url: new URL('/', Astro.site ?? Astro.url).href, inLanguage: 'es-MX' };
 ---
 
-<Layout>
+<Layout datos={sitio}>
 	<section class="busqueda">
 		<h1>¿Dónde compro este libro?</h1>
 		<form action="/buscar" method="get" role="search">

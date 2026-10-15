@@ -5,7 +5,7 @@ import Portada from '../../components/Portada.astro';
 import SelloIdioma from '../../components/SelloIdioma.astro';
 import Layout from '../../layouts/Layout.astro';
 import { ESPANOL, avisoIdioma, nombreIdioma } from '../../lib/idiomas';
-import { obtenerLibro, type DetalleLibro } from '../../lib/openlibrary';
+import { obtenerLibro, urlPortada, type DetalleLibro } from '../../lib/openlibrary';
 import { pareceIngles } from '../../lib/sinopsis';
 import {
 	TIENDAS,
@@ -79,9 +79,37 @@ const datos = libro
 			['Idioma', nombreIdioma(libro.idioma) ?? 'Sin confirmar'],
 		].filter(([, valor]) => valor) as [string, string | number][])
 	: [];
+
+// Lo que la gente escribe en Google es «dónde comprar» más el título y el autor.
+const autores = libro ? new Intl.ListFormat('es').format(libro.autores) : '';
+const tituloPagina = libro ? `${libro.titulo}${autores && `, de ${autores}`}: dónde comprarlo en México` : 'Libro no encontrado';
+const descripcion =
+	libro &&
+	`Dónde comprar «${libro.titulo}»${autores && ` de ${autores}`} en México: Amazon, Gandhi, Sanborns, Liverpool y más, impreso o en eBook. Con sinopsis, editorial y páginas.`;
+const imagen = libro && urlPortada(libro.portadaId, 'L');
+const datosLibro = libro && {
+	'@type': 'Book',
+	name: libro.titulo,
+	url: new URL(`/libro/${libro.obraId}`, Astro.site ?? Astro.url).href,
+	author: libro.autores.map((name) => ({ '@type': 'Person', name })),
+	...(imagen && { image: imagen }),
+	...(libro.isbn && { isbn: libro.isbn }),
+	...(libro.editorial && { publisher: { '@type': 'Organization', name: libro.editorial } }),
+	...(libro.anio && { datePublished: String(libro.anio) }),
+	...(libro.paginas && { numberOfPages: libro.paginas }),
+	...(libro.idioma === ESPANOL && { inLanguage: 'es' }),
+	...(libro.sinopsis && { description: libro.sinopsis.parrafos.join(' ') }),
+};
 ---
 
-<Layout titulo={libro?.titulo ?? 'Libro no encontrado'}>
+<Layout
+	titulo={tituloPagina}
+	descripcion={descripcion || undefined}
+	indexar={Boolean(libro)}
+	imagen={imagen || undefined}
+	tipo={libro ? 'book' : 'website'}
+	datos={datosLibro || undefined}
+>
 	<BuscadorCompacto slot="barra" valor={consulta} />
 
 	<a class="volver" href={volver}>{consulta ? `Volver a «${consulta}»` : 'Volver al inicio'}</a>
