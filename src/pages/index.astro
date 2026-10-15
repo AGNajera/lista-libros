@@ -10,19 +10,21 @@ const elegida = ciudadElegida(Astro.url);
 
 /**
  * Clásicos mexicanos que se van escribiendo en el campo vacío, como ejemplos de qué buscar.
+ * Si alguien empieza a escribir uno de estos títulos o autores, el campo lo completa.
  * El 15 de octubre de 2026, «El llano en llamas» estaba entre lo más leído de Gandhi y «Las batallas en el desierto»
  * entre lo más vendido de Planeta.
  */
 const ejemplos = [
-	'Pedro Páramo',
-	'Las batallas en el desierto',
-	'El llano en llamas',
-	'Como agua para chocolate',
-	'Aura',
-	'El laberinto de la soledad',
-	'Los de abajo',
-	'Balún Canán',
+	{ titulo: 'Pedro Páramo', autor: 'Juan Rulfo' },
+	{ titulo: 'Las batallas en el desierto', autor: 'José Emilio Pacheco' },
+	{ titulo: 'El llano en llamas', autor: 'Juan Rulfo' },
+	{ titulo: 'Como agua para chocolate', autor: 'Laura Esquivel' },
+	{ titulo: 'Aura', autor: 'Carlos Fuentes' },
+	{ titulo: 'El laberinto de la soledad', autor: 'Octavio Paz' },
+	{ titulo: 'Los de abajo', autor: 'Mariano Azuela' },
+	{ titulo: 'Balún Canán', autor: 'Rosario Castellanos' },
 ];
+const rotulo = ({ titulo, autor }: (typeof ejemplos)[number]) => `${titulo}, ${autor}`;
 ---
 
 <Layout>
@@ -31,13 +33,34 @@ const ejemplos = [
 		<form action="/buscar" method="get" role="search">
 			{elegida && <input type="hidden" name={PARAM_CIUDAD} value={elegida.id} />}
 			<label for="q">Escribe el título, el autor o el ISBN</label>
-			<div class="linea">
-				{/* El placeholder va en blanco: solo sirve para que :placeholder-shown diga si el campo está vacío. */}
-				<input id="q" name="q" type="search" required minlength={CONSULTA_MINIMA} autocomplete="off" placeholder=" " />
-				{/* El ejemplo se dibuja encima del campo y los lectores de pantalla no lo leen mientras cambia. */}
-				<span class="ejemplo" aria-hidden="true" data-ejemplos={JSON.stringify(ejemplos)}>{ejemplos[0]}</span>
+			<div class="fila">
+				<div class="linea">
+					{/* El placeholder va en blanco: solo sirve para que :placeholder-shown diga si el campo está vacío. */}
+					<input id="q" name="q" type="search" required minlength={CONSULTA_MINIMA} autocomplete="off" aria-autocomplete="inline" placeholder=" " />
+					{/* El ejemplo se dibuja encima del campo y los lectores de pantalla no lo leen mientras cambia. */}
+					<span class="ejemplo" aria-hidden="true" data-ejemplos={JSON.stringify(ejemplos)}>{rotulo(ejemplos[0])}</span>
+				</div>
+				{/* El texto siempre está en el botón, aunque no se vea: es su nombre para los lectores de pantalla. */}
+				<button class="boton" type="submit">
+					<svg
+						class="lupa"
+						viewBox="0 0 24 24"
+						width="24"
+						height="24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2.4"
+						stroke-linecap="round"
+						aria-hidden="true"
+					>
+						<circle cx="10.5" cy="10.5" r="6.5"></circle>
+						<path d="M15.4 15.4L20.5 20.5"></path>
+					</svg>
+					<span class="texto-boton">Buscar libro</span>
+				</button>
 			</div>
-			<button class="boton" type="submit">Buscar libro</button>
+			{/* El texto que se completa llega seleccionado y no todos los lectores de pantalla lo leen: aquí se avisa. */}
+			<p class="visualmente-oculto" role="status"></p>
 			<p class="nota">
 				Buscamos primero ediciones en español. Las tiendas físicas se buscan cerca de {nombreCompleto(ciudad)}.
 			</p>
@@ -52,29 +75,90 @@ const ejemplos = [
 </Layout>
 
 <script>
+	interface Ejemplo {
+		titulo: string;
+		autor: string;
+	}
+
 	const pausa = (ms: number) => new Promise((listo) => setTimeout(listo, ms));
+	const rotulo = ({ titulo, autor }: Ejemplo) => `${titulo}, ${autor}`;
+	/** Quitar acentos no cambia el largo de un texto en NFC, así que las posiciones siguen sirviendo para el original. */
+	const sinAcentos = (texto: string) => texto.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+
+	/**
+	 * El último ejemplo que se vio escrito completo: es el primero que se ofrece al completar. Mientras uno se borra
+	 * y el otro se escribe, sigue siendo el anterior.
+	 */
+	let ejemploActual = 0;
 
 	/**
 	 * Borra el ejemplo letra por letra y escribe el siguiente. Da una sola vuelta a la lista y se queda en el primero,
-	 * para que nada se mueva sin fin en la página.
+	 * para que nada se mueva sin fin en la página. En cuanto `quieto` dice que sí, se detiene para siempre.
 	 */
-	async function rotarEjemplos(ejemplo: HTMLElement) {
-		const titulos: string[] = JSON.parse(ejemplo.dataset.ejemplos ?? '[]');
-		for (let indice = 1; indice <= titulos.length && titulos.length > 1; indice++) {
-			await pausa(2600);
-			if (!ejemplo.isConnected) return;
-			const anterior = titulos[indice - 1];
-			const siguiente = titulos[indice % titulos.length];
+	async function rotarEjemplos(ejemplo: HTMLElement, ejemplos: Ejemplo[], quieto: () => boolean) {
+		const rotulos = ejemplos.map(rotulo);
+		// Al detenerse deja completo el último ejemplo que se vio, por si el campo vuelve a quedar vacío y sin foco.
+		const seguir = async (ms: number) => {
+			await pausa(ms);
+			if (!ejemplo.isConnected) return false;
+			if (!quieto()) return true;
+			ejemplo.textContent = rotulos[ejemploActual];
+			return false;
+		};
+		for (let indice = 1; indice <= rotulos.length && rotulos.length > 1; indice++) {
+			if (!(await seguir(2600))) return;
+			const anterior = rotulos[indice - 1];
+			const siguiente = rotulos[indice % rotulos.length];
 			for (let n = anterior.length - 1; n >= 0; n--) {
+				if (!(await seguir(28))) return;
 				ejemplo.textContent = anterior.slice(0, n);
-				await pausa(28);
 			}
-			await pausa(350);
+			if (!(await seguir(350))) return;
 			for (let n = 1; n <= siguiente.length; n++) {
+				if (!(await seguir(60))) return;
 				ejemplo.textContent = siguiente.slice(0, n);
-				await pausa(60);
 			}
+			ejemploActual = indice % rotulos.length;
 		}
+	}
+
+	/**
+	 * Mientras se escribe al final del campo, si lo escrito es el principio de un título o un autor de los ejemplos,
+	 * el resto aparece seleccionado: seguir escribiendo lo reemplaza, borrar lo quita y Enter busca el texto completo.
+	 * Lo escrito se cambia por el ejemplo tal cual, con sus mayúsculas y acentos.
+	 * `aviso` dice la sugerencia a los lectores de pantalla y se vacía cuando deja de aplicar.
+	 */
+	function completarEjemplos(campo: HTMLInputElement, ejemplos: Ejemplo[], aviso: HTMLElement) {
+		// Solo se toca si cambia, para no repetir la misma sugerencia en cada tecla.
+		const avisar = (texto: string) => {
+			if (aviso.textContent !== texto) aviso.textContent = texto;
+		};
+
+		/** El texto completo que se sugiere para lo escrito, si hay uno. */
+		function sugerencia(evento: Event) {
+			// Al borrar no se completa, para que la selección se pueda quitar.
+			if (!(evento instanceof InputEvent) || evento.inputType !== 'insertText' || evento.isComposing) return;
+			const escrito = campo.value;
+			if (escrito.trim().length < 2 || campo.selectionEnd !== escrito.length) return;
+
+			const buscado = sinAcentos(escrito);
+			const { titulo, autor } = ejemplos[ejemploActual];
+			const opciones = [titulo, autor, ...ejemplos.flatMap((ejemplo) => [ejemplo.titulo, ejemplo.autor])];
+			return opciones.find((texto) => texto.length > escrito.length && sinAcentos(texto).startsWith(buscado));
+		}
+
+		campo.addEventListener('input', (evento) => {
+			const escrito = campo.value;
+			const opcion = sugerencia(evento);
+			if (!opcion) {
+				avisar('');
+				return;
+			}
+
+			campo.value = opcion;
+			campo.setSelectionRange(escrito.length, campo.value.length);
+			avisar(`Sugerencia: ${opcion}`);
+		});
 	}
 
 	/** Voltea un libro del estante a la contraportada o de regreso. */
@@ -109,8 +193,19 @@ const ejemplos = [
 
 	document.addEventListener('astro:page-load', () => {
 		const ejemplo = document.querySelector<HTMLElement>('.busqueda .ejemplo');
-		if (!ejemplo || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-		rotarEjemplos(ejemplo);
+		const campo = document.querySelector<HTMLInputElement>('.busqueda input[type="search"]');
+		const aviso = document.querySelector<HTMLElement>('.busqueda [role="status"]');
+		if (!ejemplo || !campo || !aviso) return;
+		const ejemplos: Ejemplo[] = JSON.parse(ejemplo.dataset.ejemplos ?? '[]');
+		ejemploActual = 0;
+		completarEjemplos(campo, ejemplos, aviso);
+
+		// Una vez que la persona llega al campo, el ejemplo ya no cambia: lo que se le ofrece es lo que vio.
+		let tocado = document.activeElement === campo;
+		campo.addEventListener('focus', () => (tocado = true), { once: true });
+		// El foco se mira también directo: si la ventana no tiene el foco, enfocar el campo no dispara el evento.
+		const quieto = () => tocado || document.activeElement === campo || campo.value !== '';
+		if (!matchMedia('(prefers-reduced-motion: reduce)').matches) rotarEjemplos(ejemplo, ejemplos, quieto);
 	});
 
 	document.addEventListener('astro:before-swap', (evento) => {
@@ -122,7 +217,7 @@ const ejemplos = [
 </script>
 
 <style>
-	/* El buscador va centrado: la pregunta, el campo y el botón sobre un mismo eje. */
+	/* El buscador va centrado: la pregunta, la etiqueta y el campo con su botón sobre un mismo eje. */
 	.busqueda {
 		display: grid;
 		grid-template-columns: minmax(0, 1fr);
@@ -133,7 +228,7 @@ const ejemplos = [
 	}
 
 	h1 {
-		font-size: var(--paso-4);
+		font-size: var(--paso-3);
 		letter-spacing: -0.02em;
 		text-wrap: balance;
 	}
@@ -151,17 +246,27 @@ const ejemplos = [
 		color: var(--tinta-suave);
 	}
 
+	/* El botón va a la derecha del campo, en el mismo renglón; en teléfono baja. */
+	.fila {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem 1rem;
+		width: 100%;
+		margin-top: 0.35rem;
+	}
+
 	.linea {
 		position: relative;
-		width: 100%;
+		flex: 1;
+		min-width: 0;
 		border-bottom: 2px solid var(--tinta-suave);
-		/* En teléfono la letra baja para que quepan los títulos largos de los ejemplos. */
-		font: 700 clamp(1.35rem, 0.9rem + 3vw, 2.6rem) / 1.2 var(--font-libro);
+		/* La letra es más chica que el título para que quepan el libro y su autor; en teléfono baja todavía más. */
+		font: 700 clamp(1.05rem, 0.85rem + 0.9vw, 1.5rem) / 1.2 var(--font-libro);
 	}
 
 	.linea:focus-within {
-		border-bottom-color: var(--rosa);
-		box-shadow: 0 2px 0 var(--rosa);
+		border-bottom-color: var(--rosa-texto);
+		box-shadow: 0 2px 0 var(--rosa-texto);
 	}
 
 	input {
@@ -197,14 +302,80 @@ const ejemplos = [
 		visibility: hidden;
 	}
 
-	form .boton {
-		margin-top: 1.25rem;
+	/* Por defecto el botón es solo la lupa. El texto está en el botón con ancho cero. */
+	.fila .boton {
+		flex: none;
+		gap: 0;
+		min-width: 2.75rem;
+		padding: 0 0.6rem;
+	}
+
+	.lupa {
+		flex: none;
+		width: 1.4rem;
+		height: 1.4rem;
+	}
+
+	.texto-boton {
+		max-width: 0;
+		overflow: hidden;
+		white-space: nowrap;
+		opacity: 0;
+		transition:
+			max-width 0.35s cubic-bezier(0.3, 0.7, 0.2, 1),
+			margin 0.35s cubic-bezier(0.3, 0.7, 0.2, 1),
+			opacity 0.2s ease;
+	}
+
+	/* Con mouse, al pasar por el botón el texto se despliega y el campo le hace lugar. Con teclado, al enfocarlo. */
+	@media (hover: hover) {
+		.fila .boton:hover .texto-boton {
+			max-width: 8rem;
+			margin: 0 0.3rem 0 0.45rem;
+			opacity: 1;
+			transition-delay: 0s, 0s, 0.1s;
+		}
+	}
+
+	.fila .boton:focus-visible .texto-boton {
+		max-width: 8rem;
+		margin: 0 0.3rem 0 0.45rem;
+		opacity: 1;
 	}
 
 	.nota {
-		margin-top: 0.9rem;
+		margin-top: 1.25rem;
 		font-size: var(--paso--1);
 		color: var(--tinta-suave);
 		text-wrap: balance;
+	}
+
+	/* En teléfono el botón va debajo del campo, con la lupa y el texto siempre a la vista. */
+	@media (max-width: 34rem) {
+		.fila {
+			flex-direction: column;
+			gap: 1.1rem;
+		}
+
+		.linea {
+			flex: none;
+			width: 100%;
+		}
+
+		.fila .boton {
+			padding-inline: 1.15rem;
+		}
+
+		.fila .texto-boton {
+			max-width: none;
+			margin: 0 0 0 0.45rem;
+			opacity: 1;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.texto-boton {
+			transition: none;
+		}
 	}
 </style>

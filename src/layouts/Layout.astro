@@ -14,6 +14,7 @@ const {
 	titulo,
 	descripcion = 'Busca un libro y encuentra dónde comprarlo en México: Amazon, Gandhi, Planeta, Penguin, Sanborns, Sears y Liverpool.',
 } = Astro.props;
+const conBuscador = Astro.slots.has('barra');
 ---
 
 <!doctype html>
@@ -37,9 +38,10 @@ const {
 		<ClientRouter />
 	</head>
 	<body>
-		<header class="barra">
+		{/* Sin buscador en la barra (la portada trae el suyo), la marca va a un lado y la ciudad al otro. */}
+		<header class:list={['barra', { 'sin-buscador': !conBuscador }]}>
 			<a href={conCiudad('/', Astro.url)} class="marca" aria-label="Librero, ir al inicio">Librero</a>
-			<div class="barra-busqueda"><slot name="barra" /></div>
+			{conBuscador && <div class="barra-busqueda"><slot name="barra" /></div>}
 			<SelectorUbicacion />
 		</header>
 		<main>
@@ -66,6 +68,10 @@ const {
 		padding: 1rem 1rem 0;
 	}
 
+	.sin-buscador {
+		justify-content: space-between;
+	}
+
 	.marca {
 		font: 800 var(--paso-2) / 1 var(--font-libro);
 		letter-spacing: -0.01em;
@@ -75,10 +81,6 @@ const {
 	.barra-busqueda {
 		flex: 1 1 min(18rem, 100%);
 		min-width: 0;
-	}
-
-	.barra-busqueda:empty {
-		display: none;
 	}
 
 	.pie {
