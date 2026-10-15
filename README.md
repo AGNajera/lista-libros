@@ -9,7 +9,7 @@ Buscador de libros que muestra dónde comprarlos en México. Impresos: Amazon M�
 ## Cómo se decide la ubicación
 
 1. La ciudad que el usuario eligió en la barra superior o con «Usar mi ubicación». Viaja en la URL (`?ciudad=coyoacan`) y los enlaces internos la conservan; no se usan cookies ni se guarda nada en el dispositivo, y las coordenadas no salen del navegador.
-2. La región que manda el hosting, si existe (`x-vercel-ip-country-region` en Vercel o `cf-region-code` en Cloudflare).
+2. La región que Cloudflare deduce de la IP (`request.cf.regionCode`), si la petición viene de México.
 3. Si no hay nada, Cuauhtémoc, CDMX.
 
 ## Datos
@@ -34,10 +34,10 @@ Los enlaces de las tiendas son búsquedas por título y autor; cada tienda confi
 | :------------------ | :------------------------------------------ |
 | `pnpm install`      | Instala dependencias                        |
 | `pnpm dev`          | Servidor de desarrollo en `localhost:4321`  |
-| `pnpm build`        | Compila para Vercel en `./.vercel/output/`  |
+| `pnpm build`        | Compila para Cloudflare en `./dist/`        |
 | `pnpm test`         | Corre las pruebas de `src/lib/` con Vitest  |
 
-El sitio usa el adaptador de Vercel, que no tiene vista previa local: la versión compilada se prueba en un despliegue de vista previa.
+El sitio usa el adaptador de Cloudflare. `pnpm preview` corre la versión compilada en local con el runtime de Workers; la ubicación por IP solo funciona en un despliegue real.
 
 ## Estructura
 

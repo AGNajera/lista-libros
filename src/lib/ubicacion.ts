@@ -1,4 +1,4 @@
-/** Códigos ISO 3166-2:MX (sin el prefijo "MX-"), que también usan Vercel y Cloudflare. */
+/** Códigos ISO 3166-2:MX (sin el prefijo "MX-"), que también usa Cloudflare. */
 export const ESTADOS = {
 	AGU: 'Aguascalientes',
 	BCN: 'Baja California',
@@ -180,14 +180,16 @@ export type OrigenUbicacion = 'elegida' | 'red' | 'predeterminada';
 
 /**
  * Decide la ciudad del usuario: primero la que eligió (en la URL), luego la región
- * que manda el hosting (Vercel o Cloudflare) y si no hay nada, CDMX.
+ * que Cloudflare deduce de la IP (`request.cf`) y si no hay nada, CDMX.
  */
-export function obtenerUbicacion(url: URL, headers: Headers): { ciudad: Ciudad; origen: OrigenUbicacion } {
+export function obtenerUbicacion(url: URL, request: Request): { ciudad: Ciudad; origen: OrigenUbicacion } {
 	const elegida = ciudadElegida(url);
 	if (elegida) return { ciudad: elegida, origen: 'elegida' };
 
-	const pais = headers.get('x-vercel-ip-country') ?? headers.get('cf-ipcountry');
-	const region = (headers.get('x-vercel-ip-country-region') ?? headers.get('cf-region-code'))?.toUpperCase();
+	// En local no hay `request.cf`, o llega sin región.
+	const cf = (request as Request & { cf?: { country?: string; regionCode?: string } }).cf;
+	const pais = cf?.country;
+	const region = cf?.regionCode?.toUpperCase();
 	if (pais === 'MX' && region && region in ESTADOS) {
 		const ciudad = CIUDADES.find((c) => c.estado === region);
 		if (ciudad) return { ciudad, origen: 'red' };
