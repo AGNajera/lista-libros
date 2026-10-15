@@ -1,195 +1,210 @@
 ---
-import FichaBusqueda from '../components/FichaBusqueda.astro';
+import DondeBuscamos from '../components/DondeBuscamos.astro';
+import Estante from '../components/Estante.astro';
 import Layout from '../layouts/Layout.astro';
-import { TIENDAS_EBOOK, TIENDAS_IMPRESO } from '../lib/tiendas';
-import { conCiudad } from '../lib/ubicacion';
+import { CONSULTA_MINIMA } from '../lib/openlibrary';
+import { PARAM_CIUDAD, ciudadElegida, nombreCompleto, obtenerUbicacion } from '../lib/ubicacion';
+
+const { ciudad } = obtenerUbicacion(Astro.url, Astro.request);
+const elegida = ciudadElegida(Astro.url);
 
 /**
- * Libros que aparecen en al menos dos listas de más vendidos de México (consultadas el 2 de octubre de 2026):
- * «Lo más leído» de Gandhi, «Más vendidos» de Planeta de Libros México, «Top de ventas» de El Sótano
- * y el recuento anual de 2025 de Amexi. Actualizar cada temporada.
- * `obraId` es el id de la obra en Open Library; la ficha elige sola la mejor edición en español.
+ * Clásicos mexicanos que se van escribiendo en el campo vacío, como ejemplos de qué buscar.
+ * El 15 de octubre de 2026, «El llano en llamas» estaba entre lo más leído de Gandhi y «Las batallas en el desierto»
+ * entre lo más vendido de Planeta.
  */
-const sugerencias = [
-	{ titulo: 'Hábitos atómicos', autor: 'James Clear', obraId: 'OL17930368W' },
-	{ titulo: 'Cómo hacer que te pasen cosas buenas', autor: 'Marian Rojas Estapé', obraId: 'OL20142280W' },
-	{ titulo: 'Recupera tu mente, reconquista tu vida', autor: 'Marian Rojas Estapé', obraId: 'OL43929058W' },
-	{ titulo: 'Amanecer en la cosecha', autor: 'Suzanne Collins', obraId: 'OL43426400W' },
-	{ titulo: 'El jardín de las mariposas', autor: 'Dot Hutchison', obraId: 'OL20036652W' },
+const ejemplos = [
+	'Pedro Páramo',
+	'Las batallas en el desierto',
+	'El llano en llamas',
+	'Como agua para chocolate',
+	'Aura',
+	'El laberinto de la soledad',
+	'Los de abajo',
+	'Balún Canán',
 ];
 ---
 
 <Layout>
-	<section class="portada-sitio">
+	<section class="busqueda">
 		<h1>¿Dónde compro este libro?</h1>
-		<p class="entrada">
-			Escribe un título y te mostramos dónde conseguirlo en México, impreso o en eBook, con las sucursales más cercanas a
-			ti.
-		</p>
-		<FichaBusqueda />
-		<div class="sugerencias">
-			<p id="titulo-sugerencias">Lo más leído en México</p>
-			<ul aria-labelledby="titulo-sugerencias">
-				{
-					sugerencias.map(({ titulo, autor, obraId }) => (
-						<li>
-							<a href={conCiudad(`/libro/${obraId}`, Astro.url)} data-astro-prefetch>
-								{titulo}
-							</a>
-							<span>{autor}</span>
-						</li>
-					))
-				}
-			</ul>
-		</div>
+		<form action="/buscar" method="get" role="search">
+			{elegida && <input type="hidden" name={PARAM_CIUDAD} value={elegida.id} />}
+			<label for="q">Escribe el título, el autor o el ISBN</label>
+			<div class="linea">
+				{/* El placeholder va en blanco: solo sirve para que :placeholder-shown diga si el campo está vacío. */}
+				<input id="q" name="q" type="search" required minlength={CONSULTA_MINIMA} autocomplete="off" placeholder=" " />
+				{/* El ejemplo se dibuja encima del campo y los lectores de pantalla no lo leen mientras cambia. */}
+				<span class="ejemplo" aria-hidden="true" data-ejemplos={JSON.stringify(ejemplos)}>{ejemplos[0]}</span>
+			</div>
+			<button class="boton" type="submit">Buscar libro</button>
+			<p class="nota">
+				Buscamos primero ediciones en español. Las tiendas físicas se buscan cerca de {nombreCompleto(ciudad)}.
+			</p>
+		</form>
 	</section>
 
-	<section class="tiendas" aria-labelledby="titulo-tiendas">
-		<h2 id="titulo-tiendas">Dónde buscamos</h2>
-		<h3>Libro físico</h3>
-		<ul>
-			{
-				TIENDAS_IMPRESO.map((tienda) => (
-					<li>
-						<strong>
-							<span class="icono" style={`background: ${tienda.marca.fondo}`}>
-								<img class:list={{ placa: tienda.marca.placa }} src={tienda.marca.icono} alt="" width="18" height="18" />
-							</span>
-							{tienda.nombre}
-						</strong>
-						<span>{tienda.sucursales ? 'Con sucursales' : 'Solo en línea'}</span>
-					</li>
-				))
-			}
-		</ul>
-		<h3>eBook</h3>
-		<ul>
-			{
-				TIENDAS_EBOOK.map((tienda) => (
-					<li>
-						<strong>
-							<span class="icono" style={`background: ${tienda.marca.fondo}`}>
-								<img class:list={{ placa: tienda.marca.placa }} src={tienda.marca.icono} alt="" width="18" height="18" />
-							</span>
-							{tienda.ebook.nombre ?? tienda.nombre}
-						</strong>
-						<span>{tienda.ebook.lectura}</span>
-					</li>
-				))
-			}
-		</ul>
-	</section>
+	<Estante server:defer ciudad={elegida?.id}>
+		<Estante slot="fallback" esqueleto />
+	</Estante>
+
+	<DondeBuscamos />
 </Layout>
 
+<script>
+	const pausa = (ms: number) => new Promise((listo) => setTimeout(listo, ms));
+
+	/**
+	 * Borra el ejemplo letra por letra y escribe el siguiente. Da una sola vuelta a la lista y se queda en el primero,
+	 * para que nada se mueva sin fin en la página.
+	 */
+	async function rotarEjemplos(ejemplo: HTMLElement) {
+		const titulos: string[] = JSON.parse(ejemplo.dataset.ejemplos ?? '[]');
+		for (let indice = 1; indice <= titulos.length && titulos.length > 1; indice++) {
+			await pausa(2600);
+			if (!ejemplo.isConnected) return;
+			const anterior = titulos[indice - 1];
+			const siguiente = titulos[indice % titulos.length];
+			for (let n = anterior.length - 1; n >= 0; n--) {
+				ejemplo.textContent = anterior.slice(0, n);
+				await pausa(28);
+			}
+			await pausa(350);
+			for (let n = 1; n <= siguiente.length; n++) {
+				ejemplo.textContent = siguiente.slice(0, n);
+				await pausa(60);
+			}
+		}
+	}
+
+	/** Voltea un libro del estante a la contraportada o de regreso. */
+	function voltear(libro: Element, volteado = !libro.hasAttribute('data-volteado')) {
+		libro.toggleAttribute('data-volteado', volteado);
+	}
+
+	// El estante llega como server island después de que carga la página, así que los clics se escuchan en el documento.
+	document.addEventListener('click', (evento) => {
+		const objetivo = evento.target as Element;
+		const libro = objetivo.closest('.estante .libro');
+		if (!libro?.querySelector('.fuera')) return;
+
+		// Sacar otro libro regresa el anterior al estante, ya con la portada al frente.
+		if (objetivo.closest('.lomo')) {
+			for (const otro of libro.parentElement!.querySelectorAll('.libro')) {
+				otro.querySelector('.lomo')!.setAttribute('aria-expanded', String(otro === libro));
+				voltear(otro, false);
+			}
+			libro.querySelector<HTMLButtonElement>('.flecha')!.focus({ preventScroll: true });
+			libro.scrollIntoView({
+				behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+				inline: 'nearest',
+				block: 'nearest',
+			});
+		} else if (objetivo.closest('.tapa, .flecha')) {
+			// Seleccionar texto de la sinopsis no cuenta como tocar el libro.
+			if (objetivo.closest('.reves') && !getSelection()?.isCollapsed) return;
+			voltear(libro);
+		}
+	});
+
+	document.addEventListener('astro:page-load', () => {
+		const ejemplo = document.querySelector<HTMLElement>('.busqueda .ejemplo');
+		if (!ejemplo || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+		rotarEjemplos(ejemplo);
+	});
+
+	document.addEventListener('astro:before-swap', (evento) => {
+		// Buscar desde la portada cambia de página sin animar; el buscador grande no tiene a dónde viajar.
+		if (evento.from.pathname === '/' && evento.to.pathname === '/buscar') {
+			evento.viewTransition.skipTransition();
+		}
+	});
+</script>
+
 <style>
-	.portada-sitio {
+	/* El buscador va centrado: la pregunta, el campo y el botón sobre un mismo eje. */
+	.busqueda {
 		display: grid;
-		gap: 1.25rem;
-		padding-top: clamp(1rem, 5vw, 3.5rem);
+		grid-template-columns: minmax(0, 1fr);
+		justify-items: center;
+		gap: 1.75rem;
+		padding-top: clamp(1rem, 4vw, 3rem);
+		text-align: center;
 	}
 
 	h1 {
-		max-width: 14ch;
 		font-size: var(--paso-4);
-		font-weight: 800;
 		letter-spacing: -0.02em;
+		text-wrap: balance;
 	}
 
-	.entrada {
-		max-width: 46ch;
-		font-size: var(--paso-1);
-		color: var(--tinta-suave);
-		margin-bottom: 0.75rem;
-	}
-
-	.sugerencias {
-		max-width: 46rem;
-		color: var(--tinta-suave);
-	}
-
-	.sugerencias ul {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.4rem 1.75rem;
-		margin: 0.4rem 0 0;
-		padding: 0;
-		list-style: none;
-	}
-
-	.sugerencias li {
+	form {
 		display: grid;
+		justify-items: center;
+		width: 100%;
+		max-width: 44rem;
 	}
 
-	.sugerencias a {
-		font: italic var(--paso-1) / 1.3 var(--font-libro);
+	label {
+		display: block;
+		font-style: italic;
+		color: var(--tinta-suave);
+	}
+
+	.linea {
+		position: relative;
+		width: 100%;
+		border-bottom: 2px solid var(--tinta-suave);
+		/* En teléfono la letra baja para que quepan los títulos largos de los ejemplos. */
+		font: 700 clamp(1.35rem, 0.9rem + 3vw, 2.6rem) / 1.2 var(--font-libro);
+	}
+
+	.linea:focus-within {
+		border-bottom-color: var(--rosa);
+		box-shadow: 0 2px 0 var(--rosa);
+	}
+
+	input {
+		width: 100%;
+		padding: 0.3rem 0;
+		border: 0;
+		background: transparent;
 		color: var(--tinta);
+		font: inherit;
+		text-align: center;
+		appearance: none;
 	}
 
-	.sugerencias span {
+	input:focus-visible {
+		outline: none;
+	}
+
+	/* Se ve solo con el campo vacío y sin foco, en el mismo lugar donde iría el texto. */
+	.ejemplo {
+		position: absolute;
+		inset: 0.3rem 0 0.3rem;
+		overflow: hidden;
+		color: var(--tinta-tenue);
+		font-style: italic;
+		font-weight: 400;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+		pointer-events: none;
+	}
+
+	input:not(:placeholder-shown) + .ejemplo,
+	input:focus + .ejemplo {
+		visibility: hidden;
+	}
+
+	form .boton {
+		margin-top: 1.25rem;
+	}
+
+	.nota {
+		margin-top: 0.9rem;
 		font-size: var(--paso--1);
-	}
-
-	.tiendas {
-		margin-top: 4rem;
-		max-width: 46rem;
-	}
-
-	h2 {
-		font-size: var(--paso-2);
-		margin-bottom: 0.75rem;
-	}
-
-	.tiendas h3 {
-		font-size: var(--paso-1);
-		margin: 2.75rem 0 0.5rem;
-	}
-
-	.tiendas h2 + h3 {
-		margin-top: 1rem;
-	}
-
-	.tiendas ul {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-		border-top: 1px solid var(--renglon);
-	}
-
-	.tiendas li {
-		display: flex;
-		flex-wrap: wrap;
-		justify-content: space-between;
-		gap: 0 1rem;
-		padding: 0.55rem 0;
-		border-bottom: 1px solid var(--renglon);
-	}
-
-	.tiendas li > span {
 		color: var(--tinta-suave);
-	}
-
-	strong {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.6rem;
-	}
-
-	.icono {
-		display: grid;
-		place-items: center;
-		width: 1.6rem;
-		height: 1.6rem;
-		border-radius: 0.35rem;
-	}
-
-	.icono img {
-		width: 18px;
-		height: 18px;
-		border-radius: 3px;
-		object-fit: contain;
-	}
-
-	.icono .placa {
-		background: #ffffff;
+		text-wrap: balance;
 	}
 </style>
