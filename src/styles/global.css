@@ -16,7 +16,7 @@
 	--renglon-tenue: #233252;
 	--tinta: #e9edf5;
 	--tinta-suave: #a9b4cc;
-	--tinta-tenue: #6b7a99;
+	--tinta-tenue: #7a89a8;
 	/* Rosa mexicano: el sólido para fondos y líneas; el claro para texto sobre la mesa. */
 	--rosa: #d6006f;
 	--rosa-hover: #b8005f;
@@ -26,8 +26,6 @@
 	--gris-sello: #8e99b2;
 	--sombra: rgb(3 8 18 / 0.55);
 
-	--renglon-alto: 1.75rem;
-	--margen-ficha: 4.5rem;
 	--ancho: 68rem;
 
 	--paso--1: 0.875rem;

@@ -1,0 +1,554 @@
+---
+import { PARAM_CIUDAD, conCiudad } from '../lib/ubicacion';
+import { SUGERENCIAS, cargarSugerencias, pieDeImprenta, type Sugerido } from '../lib/sugerencias';
+import SelloIdioma from './SelloIdioma.astro';
+
+/**
+ * Lo más leído en México, como un estante. Los libros se ven de lomo, con el grosor que les dan sus páginas.
+ * Tocar un lomo saca el libro y muestra su portada; tocar la portada lo voltea y en la contraportada se lee la sinopsis.
+ *
+ * La portada lo pide como server island (`server:defer`) para no esperar a Open Library. Mientras llega,
+ * se muestra este mismo componente con `esqueleto`: los lomos con los títulos que ya se saben, sin poder sacarlos.
+ * El script que saca y voltea los libros vive en la portada: si viviera aquí, la isla lo volvería a ejecutar.
+ */
+interface Props {
+	/** La ciudad elegida en la portada. Dentro de la isla `Astro.url` no es la de la página, así que llega como prop. */
+	ciudad?: string;
+	esqueleto?: boolean;
+}
+
+const { ciudad, esqueleto = false } = Astro.props;
+
+const libros: Sugerido[] = esqueleto
+	? SUGERENCIAS.map(({ nota, ...sugerencia }) => ({ ...sugerencia, idioma: null }))
+	: await cargarSugerencias(380);
+
+const portada = new URL('/', Astro.url);
+if (ciudad) portada.searchParams.set(PARAM_CIUDAD, ciudad);
+const enlace = (obraId: string) => conCiudad(`/libro/${obraId}`, portada);
+
+/** Colores de lomo dentro de la paleta: azules que se despegan de la mesa, el papel claro y el rosa. La contraportada usa el mismo. */
+const lomos = [
+	{ fondo: '#4a64a0', texto: 'var(--tinta)' },
+	{ fondo: 'var(--rosa)', texto: '#fff' },
+	{ fondo: '#d9dfeb', texto: 'var(--mesa)' },
+	{ fondo: '#3a5285', texto: 'var(--tinta)' },
+	{ fondo: '#8fa3c9', texto: 'var(--mesa)' },
+];
+const altos = ['17.5rem', '16rem', '18.5rem', '17rem', '15.5rem'];
+
+/** El grosor sale de las páginas, con tope por si Open Library trae un número equivocado. */
+const grosor = (paginas = 300) => `${(2.6 + Math.min(paginas, 900) / 150).toFixed(2)}rem`;
+---
+
+<section class="estante" aria-labelledby="titulo-estante" aria-busy={esqueleto ? 'true' : undefined}>
+	<h2 id="titulo-estante">Lo más leído en México</h2>
+	<p class="instruccion">{esqueleto ? 'Bajando los libros del estante…' : 'Toca un lomo para sacar el libro.'}</p>
+	<div class="repisa">
+		<ul>
+			{
+				libros.map((libro, i) => {
+					const lomo = lomos[i % lomos.length];
+					return (
+						<li
+							class="libro"
+							style={`--grosor: ${grosor(libro.paginas)}; --alto: ${altos[i % altos.length]}; --lomo: ${lomo.fondo}; --letra: ${lomo.texto}`}
+						>
+							<button
+								type="button"
+								class="lomo"
+								disabled={esqueleto}
+								aria-expanded={esqueleto ? undefined : String(i === 0)}
+								aria-controls={esqueleto ? undefined : `fuera-${i}`}
+							>
+								<span class="cara-lomo" aria-hidden="true">
+									<span class="titulo-lomo">{libro.titulo}</span>
+									<span class="autor-lomo">{libro.apellido}</span>
+								</span>
+								<span class="visualmente-oculto">
+									{libro.titulo}, de {libro.autor}
+								</span>
+							</button>
+							{!esqueleto && (
+								<div class="fuera" id={`fuera-${i}`}>
+									{/* El libro mide lo que mide su portada: la imagen da el ancho y la contraportada lo copia.
+									Se descarga desde el principio para que el libro ya tenga su ancho al salir. */}
+									<div class="tapa">
+										<div class="giro">
+											<div class="frente">
+												{libro.portada ? (
+													<img src={libro.portada} alt={`Portada de ${libro.titulo}`} loading="eager" />
+												) : (
+													<span class="sin-portada">{libro.titulo}</span>
+												)}
+											</div>
+											<div class="reves" id={`sinopsis-${i}`}>
+												<p>{libro.resumen || 'No encontramos una sinopsis en español de este libro.'}</p>
+											</div>
+										</div>
+									</div>
+									<div class="resena">
+										<h3>
+											<a href={enlace(libro.obraId)} data-astro-prefetch>
+												{libro.titulo}
+											</a>
+										</h3>
+										<p class="autor">{libro.autor}</p>
+										<p class="imprenta">{pieDeImprenta(libro)}</p>
+										{/* La flecha apunta al libro para avisar que se voltea; también es el control para teclado. */}
+										<button
+											type="button"
+											class="flecha"
+											aria-controls={`sinopsis-${i}`}
+										>
+											<svg
+												viewBox="0 0 120 64"
+												width="120"
+												height="64"
+												fill="none"
+												stroke="currentColor"
+												stroke-width="2.4"
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												aria-hidden="true"
+											>
+												<path class="trazo" pathLength="1" d="M114 50C98 56 80 54 66 44C52 34 44 22 30 19C22 17.5 15 18.5 9 21.5" />
+												<path class="punta" d="M19.5 11.5L8.5 21.8L22 27" />
+											</svg>
+											<span class="pista">
+												<span class="pista-leer">Ver la sinopsis</span>
+												<span class="pista-volver">Ver la portada</span>
+											</span>
+										</button>
+										<div class="acciones">
+											<SelloIdioma idioma={libro.idioma} />
+											<a class="boton" href={enlace(libro.obraId)} data-astro-prefetch>
+												Dónde comprarlo
+											</a>
+										</div>
+									</div>
+								</div>
+							)}
+						</li>
+					);
+				})
+			}
+			<li class="sujetalibros" aria-hidden="true"></li>
+		</ul>
+	</div>
+</section>
+
+<style>
+	.estante {
+		margin-top: 4.5rem;
+	}
+
+	h2 {
+		font-size: var(--paso-2);
+	}
+
+	.instruccion {
+		margin-top: 0.3rem;
+		color: var(--tinta-suave);
+		font-size: var(--paso--1);
+	}
+
+	/* La repisa: los libros se paran sobre una tabla gruesa con su sombra. */
+	.repisa {
+		--alto-fuera: 21rem;
+		margin-top: 1.25rem;
+		overflow-x: auto;
+		overscroll-behavior-x: contain;
+		scrollbar-width: thin;
+		scrollbar-color: var(--renglon) transparent;
+	}
+
+	.repisa ul {
+		display: flex;
+		align-items: flex-end;
+		gap: 0.2rem;
+		/* La repisa mide lo que sus libros: termina poco después del sujetalibros, sin tabla vacía. */
+		width: max-content;
+		max-width: none;
+		/* Alto del libro fuera más el aire de arriba, para que la repisa no brinque cuando llegan los datos. */
+		min-height: calc(var(--alto-fuera) + 3.1rem);
+		margin: 0;
+		padding: 2rem 1.25rem 0;
+		list-style: none;
+		border-bottom: 1.1rem solid var(--renglon);
+		box-shadow: 0 1.6rem 1.6rem -1rem var(--sombra);
+	}
+
+	.libro {
+		display: flex;
+		align-items: flex-end;
+	}
+
+	.lomo {
+		position: relative;
+		width: var(--grosor);
+		height: var(--alto);
+		padding: 0;
+		border: 0;
+		border-radius: 0.2rem 0.2rem 0 0;
+		background: var(--lomo);
+		color: var(--letra);
+		cursor: pointer;
+		box-shadow:
+			inset 0.25rem 0 0 rgb(255 255 255 / 0.08),
+			inset -0.3rem 0 0 rgb(0 0 0 / 0.18);
+		transition: translate 0.2s ease;
+	}
+
+	/* Mientras llegan los datos los lomos se ven pero todavía no se pueden sacar. */
+	.lomo:disabled {
+		cursor: progress;
+	}
+
+	.lomo:not(:disabled):hover {
+		translate: 0 -0.6rem;
+	}
+
+	.cara-lomo {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		padding-top: 0.85rem;
+		/* Dos filetes arriba y abajo, como el dorado de un lomo. */
+		background:
+			linear-gradient(currentColor, currentColor) 0 0.6rem / 100% 1px no-repeat,
+			linear-gradient(currentColor, currentColor) 0 0.85rem / 100% 1px no-repeat,
+			linear-gradient(currentColor, currentColor) 0 calc(100% - 2.6rem) / 100%
+				1px no-repeat;
+		opacity: 0.95;
+	}
+
+	/*
+	 * El título ocupa el tramo entre los filetes y se centra a lo alto del lomo.
+	 * Con el texto vertical, `padding-inline` es el aire de arriba y abajo: si el título no cabe con ese aire,
+	 * pasa a un segundo renglón en lugar de tocar los filetes. `padding-block` es el de los lados.
+	 */
+	.titulo-lomo {
+		flex: 1;
+		min-height: 0;
+		padding: 0.6rem;
+		padding-inline: 1rem;
+		overflow: hidden;
+		writing-mode: vertical-rl;
+		rotate: 180deg;
+		font: italic 700 var(--paso-0) / 1.1 var(--font-libro);
+		text-align: center;
+		text-wrap: balance;
+	}
+
+	/* El autor vive debajo del último filete, centrado aunque ocupe dos renglones. */
+	.autor-lomo {
+		flex: none;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		height: 2.6rem;
+		max-width: calc(var(--grosor) - 0.4rem);
+		font: 400 0.75rem / 1.1 var(--font-libro);
+		text-align: center;
+	}
+
+	/* Libro fuera: el lomo deja su lugar a la portada y la reseña aparece a la derecha. */
+	.lomo[aria-expanded="true"] {
+		display: none;
+	}
+
+	.fuera {
+		display: none;
+		align-items: flex-end;
+		perspective: 1600px;
+	}
+
+	.lomo[aria-expanded="true"] + .fuera {
+		display: flex;
+	}
+
+	/* Al salir, el libro gira desde el lomo hasta quedar de frente. */
+	.tapa {
+		flex: none;
+		height: var(--alto-fuera);
+		cursor: pointer;
+		perspective: 1600px;
+		transform-origin: left center;
+		animation: sacar 0.45s cubic-bezier(0.2, 0.7, 0.2, 1);
+	}
+
+	@keyframes sacar {
+		from {
+			transform: rotateY(-80deg);
+		}
+	}
+
+	.giro {
+		position: relative;
+		height: 100%;
+		transform-style: preserve-3d;
+		transition: transform 0.7s cubic-bezier(0.3, 0.7, 0.2, 1);
+	}
+
+	.libro[data-volteado] .giro {
+		transform: rotateY(180deg);
+	}
+
+	.frente,
+	.reves {
+		backface-visibility: hidden;
+		-webkit-backface-visibility: hidden;
+	}
+
+	/* La portada entra completa con su propia proporción: la altura es fija y el ancho lo pone la imagen. */
+	.frente {
+		height: 100%;
+	}
+
+	.frente img,
+	.sin-portada {
+		height: 100%;
+		width: auto;
+		max-width: none;
+		border-radius: 0.15rem 0.35rem 0 0;
+		box-shadow:
+			inset 4px 0 0 rgb(0 0 0 / 0.3),
+			0 18px 30px -16px rgb(0 0 0 / 0.8);
+	}
+
+	.sin-portada {
+		display: flex;
+		align-items: flex-end;
+		aspect-ratio: 2 / 3;
+		padding: 1rem;
+		background: var(--lomo);
+		color: var(--letra);
+		font: italic 700 var(--paso-1) / 1.1 var(--font-libro);
+	}
+
+	/* Contraportada: del color del lomo, con el lomo ahora a la derecha. */
+	.reves {
+		position: absolute;
+		inset: 0;
+		padding: 1.15rem 1.2rem 1rem 1rem;
+		overflow-y: auto;
+		border-radius: 0.35rem 0.15rem 0 0;
+		background: var(--lomo);
+		color: var(--letra);
+		font-size: 0.84rem;
+		line-height: 1.45;
+		transform: rotateY(180deg);
+		box-shadow: inset -4px 0 0 rgb(0 0 0 / 0.25);
+		scrollbar-width: thin;
+	}
+
+	.resena {
+		display: flex;
+		flex-direction: column;
+		/* El ancho lo pone el texto, para que el sujetalibros quede pegado a la reseña. */
+		width: fit-content;
+		min-width: 14rem;
+		max-width: min(17rem, 70vw);
+		height: var(--alto-fuera);
+		padding: 0.25rem 0.75rem 1rem 1.5rem;
+		animation: aparecer 0.3s ease-out 0.15s backwards;
+	}
+
+	@keyframes aparecer {
+		from {
+			opacity: 0;
+			translate: -0.75rem 0;
+		}
+	}
+
+	h3 {
+		font: italic 700 var(--paso-2) / 1.1 var(--font-libro);
+	}
+
+	h3 a {
+		text-decoration: none;
+	}
+
+	.autor {
+		margin-top: 0.35rem;
+	}
+
+	.imprenta {
+		font-size: var(--paso--1);
+		color: var(--tinta-suave);
+		text-wrap: pretty;
+	}
+
+	/*
+	 * Flecha trazada a mano en el hueco entre el libro y la reseña, apuntando a la portada.
+	 * Se dibuja una vez cuando el libro sale del estante; al voltearlo se queda para regresar.
+	 */
+	.flecha {
+		position: relative;
+		z-index: 1;
+		align-self: flex-start;
+		margin: auto 0 auto -1.75rem;
+		padding: 0.25rem;
+		border: 0;
+		border-radius: 0.4rem;
+		background: none;
+		color: var(--rosa-texto);
+		cursor: pointer;
+	}
+
+	.flecha svg {
+		display: block;
+		width: 7.5rem;
+		height: auto;
+	}
+
+	/* Al señalar el libro o la flecha, junto a la cola se escribe qué pasa al tocarlo. */
+	.pista {
+		position: absolute;
+		left: calc(100% - 0.3rem);
+		bottom: 1rem;
+		color: var(--rosa-texto);
+		font: italic 700 var(--paso-0) / 1 var(--font-libro);
+		white-space: nowrap;
+		clip-path: inset(0 100% 0 0);
+		transition: clip-path 0.2s ease-in;
+	}
+
+	.flecha:hover .pista,
+	.flecha:focus-visible .pista,
+	.libro:has(.tapa:hover) .pista {
+		clip-path: inset(0 -0.5rem 0 0);
+		transition: clip-path 0.45s cubic-bezier(0.3, 0.7, 0.2, 1);
+	}
+
+	/* La pista también es el nombre de la flecha para lectores de pantalla: solo existe la que corresponde. */
+	.pista-volver,
+	.libro[data-volteado] .pista-leer {
+		display: none;
+	}
+
+	.libro[data-volteado] .pista-volver {
+		display: inline;
+	}
+
+	.lomo[aria-expanded="true"] + .fuera .trazo {
+		stroke-dasharray: 1;
+		animation: trazar 0.6s ease-out 0.45s backwards;
+	}
+
+	.lomo[aria-expanded="true"] + .fuera .punta {
+		animation: asomar 0.2s ease-out 1s backwards;
+	}
+
+	@keyframes trazar {
+		from {
+			stroke-dashoffset: 1;
+		}
+	}
+
+	@keyframes asomar {
+		from {
+			opacity: 0;
+		}
+	}
+
+	.acciones {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.75rem;
+		padding-top: 0.75rem;
+	}
+
+	/* Sujetalibros rosa al final de la fila. */
+	.sujetalibros {
+		width: 3.25rem;
+		height: 7rem;
+		margin-left: 0.4rem;
+		border-left: 0.6rem solid var(--rosa);
+		border-bottom: 0.6rem solid var(--rosa);
+		border-radius: 0 0 0 0.3rem;
+	}
+
+	/*
+	 * En teléfono el libro sale más chico, la reseña se angosta y los lomos bajan de alto,
+	 * para que junto al libro abierto ya asome el siguiente lomo.
+	 */
+	@media (max-width: 34rem) {
+		.repisa {
+			--alto-fuera: 14.5rem;
+		}
+
+		/* Aquí la reseña queda más alta que el libro: la repisa reserva su alto para no brincar cuando llegan los datos. */
+		.repisa ul {
+			min-height: 21.75rem;
+			padding-inline: 0.5rem;
+		}
+
+		.lomo {
+			height: calc(var(--alto) * 0.8);
+		}
+
+		.resena {
+			width: 10rem;
+			min-width: 0;
+			height: auto;
+			padding: 0 0.25rem 0.25rem 0.75rem;
+		}
+
+		.resena h3 {
+			font-size: var(--paso-0);
+		}
+
+		.autor {
+			font-size: var(--paso--1);
+		}
+
+		.flecha {
+			margin: 0.25rem 0 0 -1rem;
+		}
+
+		.flecha svg {
+			width: 4rem;
+		}
+
+		.acciones {
+			gap: 0.5rem;
+			padding-top: 0.25rem;
+		}
+
+		.acciones .boton {
+			min-height: 2.5rem;
+			padding-inline: 0.85rem;
+			font-size: var(--paso--1);
+			white-space: nowrap;
+		}
+
+		.reves {
+			padding: 0.7rem 0.75rem 0.6rem 0.65rem;
+			font-size: 0.72rem;
+			line-height: 1.35;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.lomo,
+		.giro,
+		.pista,
+		.flecha:hover .pista,
+		.flecha:focus-visible .pista,
+		.libro:has(.tapa:hover) .pista {
+			transition: none;
+		}
+
+		.tapa,
+		.resena,
+		.lomo[aria-expanded="true"] + .fuera .trazo,
+		.lomo[aria-expanded="true"] + .fuera .punta {
+			animation: none;
+		}
+	}
+</style>

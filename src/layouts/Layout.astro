@@ -8,12 +8,29 @@ import '../styles/global.css';
 interface Props {
 	titulo?: string;
 	descripcion?: string;
+	/** Las páginas de resultados y los errores no deben aparecer en Google. */
+	indexar?: boolean;
+	/** Imagen para la vista previa al compartir el enlace (la portada del libro). */
+	imagen?: string;
+	tipo?: 'website' | 'book';
+	/** Datos estructurados de schema.org que se insertan como JSON-LD. */
+	datos?: Record<string, unknown>;
 }
 
 const {
 	titulo,
 	descripcion = 'Busca un libro y encuentra dónde comprarlo en México: Amazon, Gandhi, Planeta, Penguin, Sanborns, Sears y Liverpool.',
+	indexar = true,
+	imagen,
+	tipo = 'website',
+	datos,
 } = Astro.props;
+const conBuscador = Astro.slots.has('barra');
+const tituloCompleto = titulo ? `${titulo} | Librero` : 'Librero: dónde comprar libros en México';
+// La ciudad, la búsqueda y la edición viajan en la URL, pero la página es la misma: la canónica va sin parámetros.
+const canonica = new URL(Astro.url.pathname, Astro.site ?? Astro.url).href;
+// «<» escapado para que un título con «</script>» no cierre la etiqueta.
+const jsonLd = datos && JSON.stringify({ '@context': 'https://schema.org', ...datos }).replaceAll('<', '\\u003c');
 ---
 
 <!doctype html>
@@ -24,7 +41,17 @@ const {
 		<meta name="description" content={descripcion} />
 		<meta name="theme-color" content="#111b2e" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<title>{titulo ? `${titulo} | Librero` : 'Librero: dónde comprar libros en México'}</title>
+		<title>{tituloCompleto}</title>
+		{indexar ? <link rel="canonical" href={canonica} /> : <meta name="robots" content="noindex, follow" />}
+		<meta property="og:site_name" content="Librero" />
+		<meta property="og:locale" content="es_MX" />
+		<meta property="og:type" content={tipo} />
+		<meta property="og:title" content={titulo ?? tituloCompleto} />
+		<meta property="og:description" content={descripcion} />
+		<meta property="og:url" content={canonica} />
+		{imagen && <meta property="og:image" content={imagen} />}
+		<meta name="twitter:card" content="summary" />
+		{jsonLd && <script is:inline type="application/ld+json" set:html={jsonLd} />}
 		{/* Se precargan los estilos que se ven al abrir: el texto, la negrita de los títulos y la cursiva de la ficha. */}
 		<Font
 			cssVariable="--font-libro"
@@ -37,9 +64,10 @@ const {
 		<ClientRouter />
 	</head>
 	<body>
-		<header class="barra">
+		{/* Sin buscador en la barra (la portada trae el suyo), la marca va a un lado y la ciudad al otro. */}
+		<header class:list={['barra', { 'sin-buscador': !conBuscador }]}>
 			<a href={conCiudad('/', Astro.url)} class="marca" aria-label="Librero, ir al inicio">Librero</a>
-			<div class="barra-busqueda"><slot name="barra" /></div>
+			{conBuscador && <div class="barra-busqueda"><slot name="barra" /></div>}
 			<SelectorUbicacion />
 		</header>
 		<main>
@@ -66,6 +94,10 @@ const {
 		padding: 1rem 1rem 0;
 	}
 
+	.sin-buscador {
+		justify-content: space-between;
+	}
+
 	.marca {
 		font: 800 var(--paso-2) / 1 var(--font-libro);
 		letter-spacing: -0.01em;
@@ -75,10 +107,6 @@ const {
 	.barra-busqueda {
 		flex: 1 1 min(18rem, 100%);
 		min-width: 0;
-	}
-
-	.barra-busqueda:empty {
-		display: none;
 	}
 
 	.pie {

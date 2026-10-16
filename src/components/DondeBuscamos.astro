@@ -1,0 +1,109 @@
+---
+import { TIENDAS_EBOOK, TIENDAS_IMPRESO } from '../lib/tiendas';
+
+/** «Dónde buscamos» en dos columnas: libro físico y eBook lado a lado. */
+const listas = [
+	{
+		titulo: 'Libro físico',
+		filas: TIENDAS_IMPRESO.map((tienda) => ({ tienda, nombre: tienda.nombre, detalle: tienda.sucursales ? 'Con sucursales' : 'Solo en línea' })),
+	},
+	{
+		titulo: 'eBook',
+		filas: TIENDAS_EBOOK.map((tienda) => ({ tienda, nombre: tienda.ebook.nombre ?? tienda.nombre, detalle: tienda.ebook.lectura })),
+	},
+];
+---
+
+<section class="tiendas" aria-labelledby="titulo-tiendas">
+	<h2 id="titulo-tiendas">Dónde buscamos</h2>
+	<div class="columnas">
+		{
+			listas.map(({ titulo, filas }) => (
+				<div>
+					<h3>{titulo}</h3>
+					<ul>
+						{filas.map(({ tienda, nombre, detalle }) => (
+							<li>
+								<span class="icono" style={`background: ${tienda.marca.fondo}`}>
+									<img class:list={{ placa: tienda.marca.placa }} src={tienda.marca.icono} alt="" width="18" height="18" />
+								</span>
+								<strong>{nombre}</strong>
+								<span class="detalle">{detalle}</span>
+							</li>
+						))}
+					</ul>
+				</div>
+			))
+		}
+	</div>
+</section>
+
+<style>
+	.tiendas {
+		margin-top: 5rem;
+	}
+
+	h2 {
+		font-size: var(--paso-2);
+		margin-bottom: 1rem;
+	}
+
+	.columnas {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(min(22rem, 100%), 1fr));
+		gap: 2rem 3rem;
+	}
+
+	h3 {
+		font-size: var(--paso-1);
+		margin-bottom: 0.5rem;
+	}
+
+	ul {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		border-top: 1px solid var(--renglon);
+	}
+
+	/* El nombre arriba y el detalle debajo, los dos alineados después del icono, aunque el detalle ocupe dos renglones. */
+	li {
+		display: grid;
+		grid-template-columns: 1.6rem minmax(0, 1fr);
+		align-items: center;
+		gap: 0.15rem 0.75rem;
+		padding: 0.85rem 0;
+		border-bottom: 1px solid var(--renglon);
+	}
+
+	strong {
+		line-height: 1.25;
+	}
+
+	.detalle {
+		grid-column: 2;
+		color: var(--tinta-suave);
+		font-size: var(--paso--1);
+		line-height: 1.35;
+	}
+
+	.icono {
+		grid-row: span 2;
+		display: grid;
+		place-items: center;
+		width: 1.6rem;
+		height: 1.6rem;
+		border-radius: 0.35rem;
+	}
+
+	.icono img {
+		width: 18px;
+		height: 18px;
+		border-radius: 3px;
+		object-fit: contain;
+	}
+
+	.icono .placa {
+		background: #ffffff;
+	}
+</style>

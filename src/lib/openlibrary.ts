@@ -173,7 +173,18 @@ const LIMITE_EDICIONES = 100;
 export const ID_OBRA = /^OL\d+W$/;
 export const ID_EDICION = /^OL\d+M$/;
 
-export async function obtenerLibro(obraId: string, edicionId?: string): Promise<DetalleLibro | ObraFusionada | null> {
+interface OpcionesLibro {
+	/** Autores ya conocidos: con ellos no se piden a Open Library. */
+	autores?: string[];
+	/** Con `false` no se busca la sinopsis en Wikipedia, para quien ya tiene la suya. */
+	wikipedia?: boolean;
+}
+
+export async function obtenerLibro(
+	obraId: string,
+	edicionId?: string,
+	{ autores: autoresConocidos, wikipedia = true }: OpcionesLibro = {},
+): Promise<DetalleLibro | ObraFusionada | null> {
 	if (!ID_OBRA.test(obraId)) return null;
 
 	let obra: Obra;
@@ -191,7 +202,7 @@ export async function obtenerLibro(obraId: string, edicionId?: string): Promise<
 
 	const [{ entries: ediciones, size }, autores] = await Promise.all([
 		pedir<{ entries: Edicion[]; size?: number }>(`/works/${obraId}/editions.json?limit=${LIMITE_EDICIONES}`),
-		obtenerAutores(obra),
+		autoresConocidos ?? obtenerAutores(obra),
 	]);
 	const edicionesIncompletas = (size ?? ediciones.length) > ediciones.length;
 
@@ -224,7 +235,7 @@ export async function obtenerLibro(obraId: string, edicionId?: string): Promise<
 	const enCatalogo = descripciones.find((parrafos) => pareceEspanol(parrafos.join(' ')));
 
 	let sinopsis: Sinopsis | undefined = enCatalogo && { parrafos: enCatalogo, fuente: 'catalogo' };
-	if (!sinopsis) {
+	if (!sinopsis && wikipedia) {
 		const titulos = [...new Set([enEspanol[0]?.title, base.titulo, obra.title].filter((t): t is string => Boolean(t)))];
 		sinopsis = await sinopsisDeWikipedia(titulos, autores[0]).catch((error) => {
 			console.error('Wikipedia no respondió', error);

@@ -84,4 +84,18 @@ describe('obtenerLibro', () => {
 		});
 		expect(await obtenerLibro('OL906W', 'OL12M')).toMatchObject({ titulo: 'Atomic Habits', edicionId: 'OL12M', idioma: 'eng' });
 	});
+
+	it('no pide los autores que ya se saben ni la sinopsis de Wikipedia si no se quiere', async () => {
+		simularCatalogo({
+			'/works/OL907W.json': { ...obra, authors: [{ author: { key: '/authors/OL1A' } }] },
+			'/works/OL907W/editions.json?limit=100': { size: 1, entries: [{ ...propia, works: [{ key: '/works/OL907W' }] }] },
+		});
+		const pedidas: string[] = [];
+		const simulado = fetch;
+		vi.stubGlobal('fetch', (url: string) => (pedidas.push(url), simulado(url)));
+
+		const libro = await obtenerLibro('OL907W', undefined, { autores: ['James Clear'], wikipedia: false });
+		expect(libro).toMatchObject({ autores: ['James Clear'], sinopsis: undefined });
+		expect(pedidas.some((url) => url.includes('/authors/') || url.includes('wikipedia.org'))).toBe(false);
+	});
 });

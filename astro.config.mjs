@@ -4,6 +4,8 @@ import cloudflare from '@astrojs/cloudflare';
 
 // https://astro.build/config
 export default defineConfig({
+	// Para las URL canónicas, el sitemap y robots.txt. Si el sitio cambia de dominio, se cambia aquí.
+	site: 'https://lista-libros.aemiliano9.workers.dev',
 	// Las búsquedas y la ubicación del usuario cambian en cada petición,
 	// así que las páginas se renderizan en el servidor.
 	output: 'server',
