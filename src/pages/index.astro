@@ -243,15 +243,24 @@ const sitio = { '@type': 'WebSite', name: 'Librero', url: new URL('/', Astro.sit
 		max-width: 44rem;
 	}
 
+	/* El texto del botón sale hacia la derecha, fuera del formulario: en pantallas medianas el formulario se angosta para que quepa. */
+	@media (hover: hover) and (width > 34rem) {
+		form {
+			max-width: min(44rem, 100% - 16rem);
+		}
+	}
+
 	label {
 		display: block;
 		font-style: italic;
 		color: var(--tinta-suave);
 	}
 
-	/* El botón va a la derecha del campo, en el mismo renglón; en teléfono baja. */
+	/* El botón va a la derecha del campo, en el mismo renglón; en teléfono baja.
+	   Su columna mide lo que la lupa, así que al desplegarse el texto el botón crece hacia la derecha y el campo no se mueve. */
 	.fila {
-		display: flex;
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) 2.75rem;
 		align-items: center;
 		gap: 0.75rem 1rem;
 		width: 100%;
@@ -260,7 +269,6 @@ const sitio = { '@type': 'WebSite', name: 'Librero', url: new URL('/', Astro.sit
 
 	.linea {
 		position: relative;
-		flex: 1;
 		min-width: 0;
 		border-bottom: 2px solid var(--tinta-suave);
 		/* La letra es más chica que el título para que quepan el libro y su autor; en teléfono baja todavía más. */
@@ -307,7 +315,7 @@ const sitio = { '@type': 'WebSite', name: 'Librero', url: new URL('/', Astro.sit
 
 	/* Por defecto el botón es solo la lupa. El texto está en el botón con ancho cero. */
 	.fila .boton {
-		flex: none;
+		justify-self: start;
 		gap: 0;
 		min-width: 2.75rem;
 		padding: 0 0.6rem;
@@ -330,7 +338,7 @@ const sitio = { '@type': 'WebSite', name: 'Librero', url: new URL('/', Astro.sit
 			opacity 0.2s ease;
 	}
 
-	/* Con mouse, al pasar por el botón el texto se despliega y el campo le hace lugar. Con teclado, al enfocarlo. */
+	/* Con mouse, al pasar por el botón el texto se despliega. Con teclado, al enfocarlo. */
 	@media (hover: hover) {
 		.fila .boton:hover .texto-boton {
 			max-width: 8rem;
@@ -356,16 +364,12 @@ const sitio = { '@type': 'WebSite', name: 'Librero', url: new URL('/', Astro.sit
 	/* En teléfono el botón va debajo del campo, con la lupa y el texto siempre a la vista. */
 	@media (max-width: 34rem) {
 		.fila {
-			flex-direction: column;
+			grid-template-columns: minmax(0, 1fr);
 			gap: 1.1rem;
 		}
 
-		.linea {
-			flex: none;
-			width: 100%;
-		}
-
 		.fila .boton {
+			justify-self: center;
 			padding-inline: 1.15rem;
 		}
 
