@@ -1,0 +1,277 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+// La ley pide identificar al responsable con nombre y domicilio, y un medio para ejercer los derechos ARCO.
+const RESPONSABLE = {
+	nombre: '[Nombre completo del responsable]',
+	domicilio: '[Domicilio para recibir notificaciones]',
+	correo: '[correo@ejemplo.com]',
+};
+const ACTUALIZADO = '2 de octubre de 2026';
+---
+
+<Layout titulo="Aviso de privacidad" descripcion="Qué datos usa Librero, para qué y cómo limitarlos.">
+	<article class="aviso-privacidad">
+		<h1>Aviso de privacidad</h1>
+		<p class="entrada">
+			Librero es un buscador que te dice dónde comprar un libro en México. No pide tu nombre, tu correo ni ningún otro dato
+			para usarlo, y no tiene cuentas de usuario.
+		</p>
+
+		<section class="resumen papel contorno-mano" aria-labelledby="titulo-resumen">
+			<h2 id="titulo-resumen">En resumen</h2>
+			<dl>
+				<div>
+					<dt>Responsable</dt>
+					<dd>{RESPONSABLE.nombre}, con domicilio en {RESPONSABLE.domicilio}.</dd>
+				</div>
+				<div>
+					<dt>Qué datos</dt>
+					<dd>
+						La ciudad que eliges, el texto que buscas y datos técnicos de tu conexión, como tu dirección IP y tu navegador.
+						Ninguno es sensible.
+					</dd>
+				</div>
+				<div>
+					<dt>Para qué</dt>
+					<dd>Mostrarte libros y las sucursales cercanas a ti, y llevar estadísticas anónimas de visitas.</dd>
+				</div>
+				<div>
+					<dt>Cómo limitarlo</dt>
+					<dd>
+						No uses «Usar mi ubicación», borra la cookie <code>ciudad</code> o bloquea las estadísticas. Abajo está el detalle.
+					</dd>
+				</div>
+			</dl>
+		</section>
+
+		<section aria-labelledby="titulo-responsable">
+			<h2 id="titulo-responsable">1. Quién es responsable de tus datos</h2>
+			<p>
+				{RESPONSABLE.nombre}, con domicilio en {RESPONSABLE.domicilio}, es responsable del tratamiento de tus datos
+				personales en Librero. Para cualquier asunto de privacidad escribe a{' '}
+				<a href={`mailto:${RESPONSABLE.correo}`}>{RESPONSABLE.correo}</a>.
+			</p>
+		</section>
+
+		<section aria-labelledby="titulo-datos">
+			<h2 id="titulo-datos">2. Qué datos usamos</h2>
+			<dl class="lista">
+				<div>
+					<dt>La ciudad que eliges</dt>
+					<dd>
+						Cuando eliges una ciudad en la barra superior, se guarda en tu navegador una cookie llamada <code>ciudad</code> con
+						el nombre de esa ciudad (por ejemplo, «coyoacan»). Dura un año y tu navegador la envía en cada visita para que los
+						enlaces a sucursales sean de tu ciudad.
+					</dd>
+				</div>
+				<div>
+					<dt>La ubicación de tu dispositivo</dt>
+					<dd>
+						Solo si presionas «Usar mi ubicación» y tu navegador te pide permiso y lo das. Las coordenadas se usan dentro de
+						tu navegador para elegir la ciudad más cercana de la lista; no se envían a nuestro servidor ni se guardan. Lo
+						único que queda es la cookie <code>ciudad</code>.
+					</dd>
+				</div>
+				<div>
+					<dt>Tu región aproximada</dt>
+					<dd>
+						Si no has elegido ciudad, nuestro proveedor de hospedaje nos indica el país y el estado desde donde te conectas,
+						calculados a partir de tu dirección IP. Se usan para armar esa página y no se guardan.
+					</dd>
+				</div>
+				<div>
+					<dt>El texto que buscas</dt>
+					<dd>
+						Lo enviamos desde nuestro servidor a Open Library y a Wikipedia para obtener los resultados y la sinopsis. Las
+						respuestas se guardan hasta 10 minutos en la memoria del servidor para no repetir consultas, y la búsqueda puede
+						aparecer en los registros de errores. No la asociamos con tu identidad. Te pedimos no escribir datos personales en
+						el buscador.
+					</dd>
+				</div>
+				<div>
+					<dt>Datos técnicos de tu conexión</dt>
+					<dd>
+						Como en cualquier sitio web, al pedir una página se envían tu dirección IP, tu navegador, tu sistema operativo y
+						la dirección de la página. Los procesa nuestro proveedor de hospedaje para entregarte la página y proteger el
+						servicio.
+					</dd>
+				</div>
+				<div>
+					<dt>Estadísticas de visitas</dt>
+					<dd>
+						Usamos Vercel Web Analytics, que no usa cookies. Registra la página visitada (que puede incluir el texto
+						buscado), el sitio del que vienes, tu país y ciudad aproximados, tu sistema operativo, tu navegador y el tipo de
+						dispositivo. Distingue visitas con un código calculado a partir de la petición, que se descarta a las 24 horas.
+						Solo vemos totales, nunca a una persona.
+					</dd>
+				</div>
+			</dl>
+			<p>No usamos datos personales sensibles.</p>
+		</section>
+
+		<section aria-labelledby="titulo-finalidades">
+			<h2 id="titulo-finalidades">3. Para qué los usamos</h2>
+			<p>Finalidades necesarias para que Librero funcione cuando lo usas:</p>
+			<ul>
+				<li>Buscar libros y mostrarte su ficha.</li>
+				<li>Mostrarte las sucursales de las tiendas en tu ciudad.</li>
+				<li>Entregarte las páginas y mantener el sitio seguro y funcionando.</li>
+			</ul>
+			<p>Finalidad que no es necesaria y que requiere tu consentimiento:</p>
+			<ul>
+				<li>Llevar estadísticas anónimas para saber qué páginas se usan y mejorar el sitio.</li>
+			</ul>
+			<p>
+				Si sigues usando Librero después de leer este aviso, entendemos que estás de acuerdo con las estadísticas. Puedes
+				oponerte en cualquier momento como se explica en el punto 5. No vendemos tus datos ni los usamos para publicidad.
+			</p>
+		</section>
+
+		<section aria-labelledby="titulo-terceros">
+			<h2 id="titulo-terceros">4. Quién más recibe datos</h2>
+			<ul>
+				<li>
+					<strong>Vercel Inc.</strong>, en Estados Unidos, hospeda el sitio y genera las estadísticas por cuenta nuestra.
+				</li>
+				<li>
+					<strong>Open Library</strong> (Internet Archive) y <strong>Wikipedia</strong> (Wikimedia Foundation), en Estados
+					Unidos, reciben el texto que buscas desde nuestro servidor, sin tu dirección IP.
+				</li>
+				<li>
+					Las <strong>portadas</strong> se descargan directamente de Open Library, así que ese sitio recibe tu dirección IP y
+					tu navegador, como cualquier sitio que carga una imagen.
+				</li>
+			</ul>
+			<p>
+				Los botones de las tiendas, los mapas de sucursales y los enlaces a Wikipedia te llevan a sitios de otras empresas.
+				Al abrirlos sales de Librero y aplica el aviso de privacidad de cada una.
+			</p>
+		</section>
+
+		<section aria-labelledby="titulo-limitar">
+			<h2 id="titulo-limitar">5. Cómo limitar el uso de tus datos</h2>
+			<ul>
+				<li>No presiones «Usar mi ubicación», o niega el permiso cuando tu navegador lo pida.</li>
+				<li>
+					Borra la cookie <code>ciudad</code> desde la configuración de tu navegador. Sin ella mostramos tu región aproximada
+					o, si no la hay, Ciudad de México.
+				</li>
+				<li>Bloquea las estadísticas con un bloqueador de contenido o de rastreadores en tu navegador.</li>
+				<li>No escribas datos personales en el buscador.</li>
+			</ul>
+		</section>
+
+		<section aria-labelledby="titulo-arco">
+			<h2 id="titulo-arco">6. Tus derechos</h2>
+			<p>
+				Tienes derecho a conocer qué datos tenemos de ti (acceso), a corregirlos (rectificación), a pedir que los
+				eliminemos (cancelación) y a oponerte a su uso (oposición). También puedes revocar tu consentimiento para las
+				estadísticas.
+			</p>
+			<p>
+				Para hacerlo escribe a <a href={`mailto:${RESPONSABLE.correo}`}>{RESPONSABLE.correo}</a> con tu nombre, un medio
+				para responderte, qué derecho quieres ejercer y sobre qué datos. Si pides acceso, tendremos que confirmar tu
+				identidad. Te responderemos en un máximo de 20 días hábiles y, si procede, lo haremos efectivo en los 15 días hábiles
+				siguientes.
+			</p>
+			<p>
+				Como Librero no pide tu nombre ni crea cuentas, en la mayoría de los casos no podremos relacionar ningún dato
+				contigo. Si es así, te lo diremos en la respuesta.
+			</p>
+		</section>
+
+		<section aria-labelledby="titulo-cambios">
+			<h2 id="titulo-cambios">7. Cambios a este aviso</h2>
+			<p>
+				Publicaremos cualquier cambio en esta página con su fecha de actualización. Si el cambio es importante, por
+				ejemplo si algún día Librero tiene cuentas de usuario, lo avisaremos también en la página de inicio.
+			</p>
+		</section>
+
+		<p class="actualizado">Última actualización: {ACTUALIZADO}.</p>
+	</article>
+</Layout>
+
+<style>
+	.aviso-privacidad {
+		display: grid;
+		gap: 2.5rem;
+		max-width: 46rem;
+	}
+
+	h1 {
+		font-size: var(--paso-3);
+		font-weight: 800;
+		letter-spacing: -0.01em;
+	}
+
+	.entrada {
+		margin-top: -1.5rem;
+		font-size: var(--paso-1);
+		color: var(--tinta-suave);
+	}
+
+	h2 {
+		font-size: var(--paso-2);
+		margin-bottom: 0.75rem;
+	}
+
+	section > p + p,
+	section > ul + p,
+	section > dl + p,
+	section > p + ul {
+		margin-top: 0.75rem;
+	}
+
+	ul {
+		margin: 0;
+		padding-left: 1.25rem;
+	}
+
+	li + li {
+		margin-top: 0.4rem;
+	}
+
+	code {
+		font-size: 0.92em;
+		color: var(--rosa-texto);
+	}
+
+	.resumen {
+		padding: 1.5rem;
+	}
+
+	.resumen dl,
+	.lista {
+		display: grid;
+		gap: 1rem;
+		margin: 0;
+	}
+
+	dt {
+		font-weight: 700;
+	}
+
+	dd {
+		margin: 0.15rem 0 0;
+		color: var(--tinta-suave);
+	}
+
+	@media (min-width: 40rem) {
+		.resumen dl > div {
+			display: grid;
+			grid-template-columns: 9rem 1fr;
+			gap: 1rem;
+		}
+
+		.resumen dd {
+			margin: 0;
+		}
+	}
+
+	.actualizado {
+		color: var(--tinta-tenue);
+		font-size: var(--paso--1);
+	}
+</style>
