@@ -4,12 +4,11 @@ import type { Tienda } from '../lib/tiendas';
 interface Props {
 	tienda: Tienda;
 	href: string;
-	ebook?: boolean;
 }
 
-const { tienda, href, ebook = false } = Astro.props;
-const colores = (ebook && tienda.ebook?.marca) || tienda.marca;
-const texto = ebook ? `eBook en ${tienda.nombreCorto}` : `Ver en ${tienda.nombreCorto}`;
+const { tienda, href } = Astro.props;
+const colores = tienda.marca;
+const texto = `Ver en ${tienda.nombreCorto}`;
 ---
 
 {/* Cada botón usa los colores e ícono de la tienda para reconocerla de un vistazo. */}
