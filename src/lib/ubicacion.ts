@@ -143,15 +143,18 @@ export const CIUDAD_PREDETERMINADA = CIUDADES.find((ciudad) => ciudad.id === 'cu
 /** La ciudad elegida viaja en la URL (?ciudad=) en lugar de una cookie, para no guardar nada en el dispositivo. */
 export const PARAM_CIUDAD = 'ciudad';
 
+const CIUDADES_POR_ID = new Map(CIUDADES.map((ciudad) => [ciudad.id, ciudad]));
+const CIUDADES_POR_ESTADO: [CodigoEstado, Ciudad[]][] = (Object.keys(ESTADOS) as CodigoEstado[]).map((estado) => [
+	estado,
+	CIUDADES.filter((ciudad) => ciudad.estado === estado),
+]);
+
 export function ciudadPorId(id: string | undefined): Ciudad | undefined {
-	return CIUDADES.find((ciudad) => ciudad.id === id);
+	return id ? CIUDADES_POR_ID.get(id) : undefined;
 }
 
 export function ciudadesPorEstado(): [CodigoEstado, Ciudad[]][] {
-	return (Object.keys(ESTADOS) as CodigoEstado[]).map((estado) => [
-		estado,
-		CIUDADES.filter((ciudad) => ciudad.estado === estado),
-	]);
+	return CIUDADES_POR_ESTADO;
 }
 
 /** Distancia aproximada en km (haversine). */

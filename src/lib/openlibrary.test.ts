@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { PAGINA_MAXIMA, POR_PAGINA, obtenerLibro, paginaPedida, paginasDe } from './openlibrary';
+import { PAGINA_MAXIMA, POR_PAGINA, buscarLibros, obtenerLibro, paginaPedida, paginasDe } from './openlibrary';
 
 describe('paginaPedida', () => {
 	it.each([
@@ -97,5 +97,100 @@ describe('obtenerLibro', () => {
 		const libro = await obtenerLibro('OL907W', undefined, { autores: ['James Clear'], wikipedia: false });
 		expect(libro).toMatchObject({ autores: ['James Clear'], sinopsis: undefined });
 		expect(pedidas.some((url) => url.includes('/authors/') || url.includes('wikipedia.org'))).toBe(false);
+	});
+
+	it('prefiere la edición en español con ISBN mexicano frente a otras en español', async () => {
+		simularCatalogo({
+			'/works/OL908W.json': obra,
+			'/works/OL908W/editions.json?limit=100': {
+				size: 2,
+				entries: [
+					{
+						key: '/books/OL20M',
+						works: [{ key: '/works/OL908W' }],
+						title: 'Hábitos atómicos (España)',
+						languages: [{ key: '/languages/spa' }],
+						isbn_13: ['9788408210000'],
+						publish_date: '2024',
+						covers: [100],
+					},
+					{
+						key: '/books/OL21M',
+						works: [{ key: '/works/OL908W' }],
+						title: 'Hábitos atómicos (México)',
+						isbn_13: ['9786077476719'],
+						publish_date: '2019',
+					},
+				],
+			},
+		});
+		const libro = await obtenerLibro('OL908W');
+		expect(libro).toMatchObject({ edicionId: 'OL21M', titulo: 'Hábitos atómicos (México)', idioma: 'spa' });
+	});
+
+	it('consulta el buscador cuando una obra tiene más ediciones que el límite inicial', async () => {
+		simularCatalogo({
+			'/works/OL909W.json': obra,
+			'/works/OL909W/editions.json?limit=100': {
+				size: 150,
+				entries: [{ key: '/books/OL30M', works: [{ key: '/works/OL909W' }], title: 'Atomic Habits', languages: [{ key: '/languages/eng' }] }],
+			},
+			'/search.json?q=key%3A%2Fworks%2FOL909W&lang=es&limit=1&fields=key%2Ceditions%2Ceditions.key%2Ceditions.language%2Ceditions.isbn': {
+				docs: [
+					{
+						key: '/works/OL909W',
+						editions: { docs: [{ key: '/books/OL31M', language: ['spa'], isbn: ['9786077476719'] }] },
+					},
+				],
+			},
+			'/books/OL31M.json': { key: '/books/OL31M', works: [{ key: '/works/OL909W' }], title: 'Hábitos atómicos' },
+		});
+		const libro = await obtenerLibro('OL909W');
+		expect(libro).toMatchObject({
+			edicionId: 'OL31M',
+			idioma: 'spa',
+			edicionesIncompletas: true,
+			totalEdicionesEspanol: 1,
+		});
+	});
+});
+
+describe('buscarLibros', () => {
+	afterEach(() => vi.unstubAllGlobals());
+
+	it('pone los libros en español primero conservando el orden de relevancia', async () => {
+		const pedidas: string[] = [];
+		vi.stubGlobal('fetch', async (url: string) => {
+			pedidas.push(url);
+			return Response.json({
+				numFound: 3,
+				docs: [
+					{
+						key: '/works/OL1W',
+						title: 'Book One',
+						editions: { docs: [{ key: '/books/OL1M', title: 'Book One', language: ['eng'] }] },
+					},
+					{
+						key: '/works/OL2W',
+						title: 'Libro Dos',
+						editions: { docs: [{ key: '/books/OL2M', title: 'Libro Dos', isbn: ['9786070750403'] }] },
+					},
+					{
+						key: '/works/OL3W',
+						title: 'Libro Tres',
+						editions: { docs: [{ key: '/books/OL3M', title: 'Libro Tres', language: ['spa'] }] },
+					},
+				],
+			});
+		});
+
+		const resultado = await buscarLibros('prueba relevancia');
+		expect(new URL(pedidas[0]).searchParams.get('q')).toBe('prueba relevancia');
+		expect(resultado.total).toBe(3);
+		expect(resultado.libros.map((l) => [l.obraId, l.idioma])).toEqual([
+			['OL2W', 'spa'],
+			['OL3W', 'spa'],
+			['OL1W', 'eng'],
+		]);
 	});
 });

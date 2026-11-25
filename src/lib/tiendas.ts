@@ -1,5 +1,5 @@
 import { fichaEnAppleBooks } from './apple';
-import type { Libro } from './openlibrary';
+import type { Libro } from './catalogo';
 import { ESTADOS, nombreCorto, type Ciudad } from './ubicacion';
 
 /** Colores del botón principal de cada tienda, tomados de sus sitios (octubre de 2026). */
