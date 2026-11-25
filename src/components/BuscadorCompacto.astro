@@ -12,10 +12,10 @@ const elegida = ciudadElegida(Astro.url);
 
 <form class="compacto" action="/buscar" method="get" role="search" transition:persist="buscador">
 	<label class="visualmente-oculto" for="q-barra">Título, autor o ISBN</label>
-	<input id="q-barra" name="q" type="search" required minlength={CONSULTA_MINIMA} value={valor} placeholder="Título, autor o ISBN" />
+	<input id="q-barra" name="q" type="search" required minlength={CONSULTA_MINIMA} autocomplete="off" value={valor} placeholder="Título, autor o ISBN…" />
 	{/* Deshabilitado no se envía: así la búsqueda solo lleva la ciudad cuando el usuario eligió una. */}
 	<input id="ciudad-barra" type="hidden" name={PARAM_CIUDAD} value={elegida?.id ?? ''} disabled={!elegida} />
-	<button type="submit">Buscar</button>
+	<button type="submit" data-buscar-btn>Buscar</button>
 </form>
 
 <script>
@@ -36,6 +36,22 @@ const elegida = ciudadElegida(Astro.url);
 			evento.viewTransition.skipTransition();
 		}
 	});
+
+	document.addEventListener('submit', (evento) => {
+		const form = evento.target;
+		if (!(form instanceof HTMLFormElement) || !form.matches('.compacto')) return;
+		const boton = form.querySelector<HTMLButtonElement>('[data-buscar-btn]');
+		if (!boton) return;
+		boton.textContent = 'Buscando…';
+		boton.setAttribute('aria-busy', 'true');
+	});
+
+	document.addEventListener('astro:page-load', () => {
+		const boton = document.querySelector<HTMLButtonElement>('.compacto [data-buscar-btn]');
+		if (!boton) return;
+		boton.textContent = 'Buscar';
+		boton.removeAttribute('aria-busy');
+	});
 </script>
 
 <style>
@@ -46,7 +62,8 @@ const elegida = ciudadElegida(Astro.url);
 	}
 
 	.compacto:focus-within {
-		border-bottom-color: var(--rosa);
+		border-bottom-color: var(--rosa-texto);
+		box-shadow: 0 2px 0 var(--rosa-texto);
 	}
 
 	input {
@@ -71,5 +88,10 @@ const elegida = ciudadElegida(Astro.url);
 		color: var(--rosa-texto);
 		font: 700 var(--paso-0) var(--font-ui);
 		cursor: pointer;
+	}
+
+	button:hover {
+		color: var(--tinta);
+		text-decoration: underline;
 	}
 </style>

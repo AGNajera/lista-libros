@@ -18,14 +18,22 @@ const alt = tamano === 'L' ? `Portada de «${titulo}»` : '';
 {/* El mismo transition:name en la lista y en el detalle hace que la portada viaje entre páginas. */}
 <div class:list={['portada', `portada-${tamano}`]} transition:name={`portada-${obraId}`}>
 	{
-		src ? (
-			<img src={src} {alt} loading={carga} decoding="async" width={tamano === 'L' ? 320 : 120} height={tamano === 'L' ? 480 : 180} />
-		) : (
-			<span class="sin-portada contorno-mano" aria-hidden="true">
-				{titulo}
-			</span>
+		src && (
+			<img
+				src={src}
+				{alt}
+				loading={carga}
+				decoding="async"
+				fetchpriority={tamano === 'L' ? 'high' : undefined}
+				width={tamano === 'L' ? 320 : 120}
+				height={tamano === 'L' ? 480 : 180}
+				data-portada-img
+			/>
 		)
 	}
+	<span class="sin-portada contorno-mano" aria-hidden="true" data-sin-portada hidden={Boolean(src)}>
+		{titulo}
+	</span>
 </div>
 
 <style>
@@ -61,6 +69,10 @@ const alt = tamano === 'L' ? `Portada de «${titulo}»` : '';
 		font: italic 700 0.75rem / 1.15 var(--font-libro);
 		color: var(--tinta-suave);
 		overflow: hidden;
+	}
+
+	.sin-portada[hidden] {
+		display: none;
 	}
 
 	/* La portada recorta lo que sobresale: el trazo va por dentro. */

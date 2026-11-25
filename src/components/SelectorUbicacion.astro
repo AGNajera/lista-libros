@@ -6,7 +6,7 @@ const { ciudad } = obtenerUbicacion(Astro.url, Astro.request);
 
 <div class="ubicacion">
 	<label for="ciudad">Tiendas cerca de</label>
-	<select id="ciudad" data-ciudad>
+	<select id="ciudad" autocomplete="off" data-ciudad>
 		{
 			ciudadesPorEstado().map(([estado, ciudades]) => (
 				<optgroup label={ESTADOS[estado]}>
@@ -20,7 +20,7 @@ const { ciudad } = obtenerUbicacion(Astro.url, Astro.request);
 		}
 	</select>
 	<button type="button" class="ubicarme" data-geolocalizar>Usar mi ubicación</button>
-	<p class="estado" role="status" data-estado-ubicacion></p>
+	<p class="estado" role="status" aria-atomic="true" data-estado-ubicacion></p>
 </div>
 
 <script>
@@ -105,6 +105,10 @@ const { ciudad } = obtenerUbicacion(Astro.url, Astro.request);
 		font: 700 var(--paso--1) var(--font-ui);
 	}
 
+	select:hover {
+		border-color: var(--tinta-suave);
+	}
+
 	.ubicarme {
 		min-height: 2.5rem;
 		padding: 0.3rem 0.2rem;
@@ -115,6 +119,10 @@ const { ciudad } = obtenerUbicacion(Astro.url, Astro.request);
 		text-decoration: underline;
 		text-underline-offset: 0.2em;
 		cursor: pointer;
+	}
+
+	.ubicarme:hover:not(:disabled) {
+		color: var(--tinta);
 	}
 
 	.ubicarme:disabled {
@@ -128,7 +136,8 @@ const { ciudad } = obtenerUbicacion(Astro.url, Astro.request);
 	}
 
 	.estado:empty {
-		display: none;
+		margin: 0;
+		line-height: 0;
 	}
 
 	/* En teléfono la etiqueta sube y la lista comparte renglón con el botón, para no gastar tres renglones. */

@@ -76,11 +76,12 @@ const grosor = (paginas = 300) => `${(2.6 + Math.min(paginas, 900) / 150).toFixe
 									<div class="tapa">
 										<div class="giro">
 											<div class="frente">
-												{libro.portada ? (
-													<img src={libro.portada} alt={`Portada de ${libro.titulo}`} loading="eager" />
-												) : (
-													<span class="sin-portada">{libro.titulo}</span>
-												)}
+												{
+													libro.portada && (
+														<img src={libro.portada} alt={`Portada de ${libro.titulo}`} loading="eager" decoding="async" data-portada-img />
+													)
+												}
+												<span class="sin-portada" data-sin-portada hidden={Boolean(libro.portada)}>{libro.titulo}</span>
 											</div>
 											<div class="reves" id={`sinopsis-${i}`}>
 												<p>{libro.resumen || 'No encontramos una sinopsis en español de este libro.'}</p>
@@ -327,6 +328,10 @@ const grosor = (paginas = 300) => `${(2.6 + Math.min(paginas, 900) / 150).toFixe
 		background: var(--lomo);
 		color: var(--letra);
 		font: italic 700 var(--paso-1) / 1.1 var(--font-libro);
+	}
+
+	.sin-portada[hidden] {
+		display: none;
 	}
 
 	/* Contraportada: del color del lomo, con el lomo ahora a la derecha. */

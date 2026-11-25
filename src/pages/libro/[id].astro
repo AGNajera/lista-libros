@@ -75,7 +75,7 @@ const datos = libro
 			['Autor', libro.autores.join(', ')],
 			['Editorial', libro.editorial],
 			['Año', libro.anio],
-			['Páginas', libro.paginas],
+			['Páginas', libro.paginas?.toLocaleString('es-MX')],
 			['Idioma', nombreIdioma(libro.idioma) ?? 'Sin confirmar'],
 		].filter(([, valor]) => valor) as [string, string | number][])
 	: [];
@@ -182,7 +182,7 @@ const datosLibro = libro && {
 								<p class="nota">
 									Resumen de{' '}
 									<a href={libro.sinopsis.url} target="_blank" rel="noopener noreferrer">
-										Wikipedia en español
+										Wikipedia en español<span class="visualmente-oculto"> (abre otra pestaña)</span>
 									</a>
 									.
 								</p>
@@ -243,7 +243,7 @@ const datosLibro = libro && {
 										<p class="tienda-detalle">
 											{sucursales ? (
 												<a href={sucursales} target="_blank" rel="noopener noreferrer">
-													Sucursales en {nombreCorto(ciudad)}
+													Sucursales en {nombreCorto(ciudad)}<span class="visualmente-oculto"> (abre otra pestaña)</span>
 												</a>
 											) : (
 												'Solo en línea, con envío a domicilio'
@@ -357,6 +357,7 @@ const datosLibro = libro && {
 	dd {
 		margin: 0;
 		font-weight: 700;
+		font-variant-numeric: tabular-nums;
 		overflow-wrap: anywhere;
 	}
 

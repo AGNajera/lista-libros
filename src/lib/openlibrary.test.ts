@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { PAGINA_MAXIMA, POR_PAGINA, obtenerLibro, paginaPedida, paginasDe } from './openlibrary';
+import { PAGINA_MAXIMA, POR_PAGINA, buscarLibros, obtenerLibro, paginaPedida, paginasDe } from './openlibrary';
 
 describe('paginaPedida', () => {
 	it.each([
@@ -97,5 +97,20 @@ describe('obtenerLibro', () => {
 		const libro = await obtenerLibro('OL907W', undefined, { autores: ['James Clear'], wikipedia: false });
 		expect(libro).toMatchObject({ autores: ['James Clear'], sinopsis: undefined });
 		expect(pedidas.some((url) => url.includes('/authors/') || url.includes('wikipedia.org'))).toBe(false);
+	});
+});
+
+describe('buscarLibros con filtro en español', () => {
+	afterEach(() => vi.unstubAllGlobals());
+
+	it('agrega language:spa a la consulta cuando soloEspanol es true', async () => {
+		const pedidas: string[] = [];
+		vi.stubGlobal('fetch', async (url: string) => {
+			pedidas.push(url);
+			return Response.json({ numFound: 0, docs: [] });
+		});
+
+		await buscarLibros('dracula', 1, true);
+		expect(new URL(pedidas[0]).searchParams.get('q')).toBe('dracula language:spa');
 	});
 });

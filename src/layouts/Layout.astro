@@ -41,6 +41,7 @@ const jsonLd = datos && JSON.stringify({ '@context': 'https://schema.org', ...da
 		<meta name="description" content={descripcion} />
 		<meta name="theme-color" content="#111b2e" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="preconnect" href="https://covers.openlibrary.org" crossorigin />
 		<title>{tituloCompleto}</title>
 		{indexar ? <link rel="canonical" href={canonica} /> : <meta name="robots" content="noindex, follow" />}
 		<meta property="og:site_name" content="Librero" />
@@ -64,13 +65,15 @@ const jsonLd = datos && JSON.stringify({ '@context': 'https://schema.org', ...da
 		<ClientRouter />
 	</head>
 	<body>
+		<div class="progreso" aria-hidden="true" transition:persist="progreso"></div>
+		<a class="saltar" href="#contenido">Saltar al contenido</a>
 		{/* Sin buscador en la barra (la portada trae el suyo), la marca va a un lado y la ciudad al otro. */}
 		<header class:list={['barra', { 'sin-buscador': !conBuscador }]}>
-			<a href={conCiudad('/', Astro.url)} class="marca" aria-label="Librero, ir al inicio">Librero</a>
+			<a href={conCiudad('/', Astro.url)} class="marca" aria-label="Librero, ir al inicio" translate="no">Librero</a>
 			{conBuscador && <div class="barra-busqueda"><slot name="barra" /></div>}
 			<SelectorUbicacion />
 		</header>
-		<main>
+		<main id="contenido">
 			<slot />
 		</main>
 		<footer class="pie">
@@ -82,7 +85,99 @@ const jsonLd = datos && JSON.stringify({ '@context': 'https://schema.org', ...da
 	</body>
 </html>
 
+<script>
+	function mostrarFallbackPortada(img: HTMLImageElement) {
+		const fallback = img.parentElement?.querySelector<HTMLElement>('[data-sin-portada]');
+		if (!fallback) return;
+		img.hidden = true;
+		fallback.hidden = false;
+	}
+
+	function revisarPortadas() {
+		for (const img of document.querySelectorAll<HTMLImageElement>('img[data-portada-img]')) {
+			if (img.complete && img.naturalWidth === 0) mostrarFallbackPortada(img);
+		}
+	}
+
+	document.addEventListener(
+		'error',
+		(evento) => {
+			const objetivo = evento.target;
+			if (objetivo instanceof HTMLImageElement && objetivo.matches('[data-portada-img]')) {
+				mostrarFallbackPortada(objetivo);
+			}
+		},
+		true,
+	);
+
+	document.addEventListener('astro:before-preparation', () => {
+		document.querySelector('.progreso')?.setAttribute('data-estado', 'cargando');
+	});
+
+	document.addEventListener('astro:after-swap', () => {
+		const barra = document.querySelector('.progreso');
+		if (!barra) return;
+		barra.setAttribute('data-estado', 'listo');
+		setTimeout(() => barra.removeAttribute('data-estado'), 250);
+	});
+
+	document.addEventListener('astro:page-load', () => {
+		document.querySelector('.progreso')?.removeAttribute('data-estado');
+		revisarPortadas();
+	});
+</script>
+
 <style>
+	.progreso {
+		position: fixed;
+		inset: 0 0 auto;
+		z-index: 100;
+		height: 3px;
+		background: var(--rosa);
+		transform: scaleX(0);
+		transform-origin: left center;
+		opacity: 0;
+		pointer-events: none;
+		transition:
+			transform 0.35s ease-out,
+			opacity 0.2s ease;
+	}
+
+	.progreso[data-estado='cargando'] {
+		opacity: 1;
+		transform: scaleX(0.72);
+		transition: transform 2.5s cubic-bezier(0.1, 0.5, 0.2, 1);
+	}
+
+	.progreso[data-estado='listo'] {
+		opacity: 0;
+		transform: scaleX(1);
+	}
+
+	.saltar {
+		position: fixed;
+		top: 0.75rem;
+		left: 0.75rem;
+		z-index: 110;
+		padding: 0.5rem 0.9rem;
+		border-radius: 0.35rem;
+		background: var(--rosa);
+		color: #fff;
+		font-weight: 700;
+		text-decoration: none;
+		transform: translateY(-200%);
+	}
+
+	.saltar:focus-visible {
+		transform: translateY(0);
+		color: #fff;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.progreso {
+			transition: none;
+		}
+	}
 	.barra {
 		display: flex;
 		flex-wrap: wrap;
