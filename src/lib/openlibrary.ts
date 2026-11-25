@@ -36,7 +36,7 @@ export interface DetalleLibro extends Libro {
 }
 
 /** Open Library fusiona obras duplicadas: el id viejo solo dice en cuál quedó. */
-export interface ObraFusionada {
+interface ObraFusionada {
 	fusionadaEn: string;
 }
 
@@ -108,7 +108,7 @@ export async function buscarLibros(consulta: string, pagina = 1): Promise<Result
 		page: String(pagina),
 		fields: CAMPOS,
 	});
-	const isbn = consulta.replace(/[-\s]/g, '');
+	const isbn = consulta.replace(/^isbn[:\s]*/i, '').replace(/[-\s]/g, '');
 	if (/^(97[89])?\d{9}[\dX]$/i.test(isbn)) params.set('isbn', isbn);
 	else params.set('q', consulta);
 
@@ -170,8 +170,8 @@ interface Edicion {
 /** Open Library entrega las ediciones de una obra por páginas; solo se pide la primera. */
 const LIMITE_EDICIONES = 100;
 
-export const ID_OBRA = /^OL\d+W$/;
-export const ID_EDICION = /^OL\d+M$/;
+const ID_OBRA = /^OL\d+W$/;
+const ID_EDICION = /^OL\d+M$/;
 
 interface OpcionesLibro {
 	/** Autores ya conocidos: con ellos no se piden a Open Library. */
@@ -357,6 +357,6 @@ function mejorIsbn(isbns: string[]): string | undefined {
 	);
 }
 
-export function urlPortada(id: number | undefined, tamano: 'S' | 'M' | 'L' = 'M'): string | undefined {
+export function urlPortada(id: number | undefined, tamano: 'M' | 'L' = 'M'): string | undefined {
 	return id ? `https://covers.openlibrary.org/b/id/${id}-${tamano}.jpg` : undefined;
 }

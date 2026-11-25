@@ -142,16 +142,6 @@ img {
 	color: #fff;
 }
 
-.boton--claro {
-	background: transparent;
-	color: var(--rosa-texto);
-}
-
-.boton--claro:hover {
-	background: var(--rosa);
-	color: #fff;
-}
-
 .aviso {
 	padding: 0.85rem 1rem;
 	background: var(--aviso-fondo);

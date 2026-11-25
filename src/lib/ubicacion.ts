@@ -34,7 +34,7 @@ export const ESTADOS = {
 	ZAC: 'Zacatecas',
 } as const;
 
-export type CodigoEstado = keyof typeof ESTADOS;
+type CodigoEstado = keyof typeof ESTADOS;
 
 export interface Ciudad {
 	id: string;
@@ -57,7 +57,7 @@ const c = (id: string, nombre: string, estado: CodigoEstado, lat: number, lon: n
  * La primera de cada estado es la que se usa cuando solo se conoce el estado.
  * Las coordenadas son aproximadas: solo sirven para elegir la ciudad más cercana.
  */
-export const CIUDADES: Ciudad[] = [
+const CIUDADES: Ciudad[] = [
 	c('aguascalientes', 'Aguascalientes', 'AGU', 21.88, -102.29),
 	c('tijuana', 'Tijuana', 'BCN', 32.51, -117.04),
 	c('mexicali', 'Mexicali', 'BCN', 32.62, -115.45),
@@ -139,11 +139,11 @@ export const CIUDADES: Ciudad[] = [
 	c('zacatecas', 'Zacatecas', 'ZAC', 22.77, -102.58),
 ];
 
-export const CIUDAD_PREDETERMINADA = CIUDADES.find((ciudad) => ciudad.id === 'cuauhtemoc-cdmx')!;
+const CIUDAD_PREDETERMINADA = CIUDADES.find((ciudad) => ciudad.id === 'cuauhtemoc-cdmx')!;
 /** La ciudad elegida viaja en la URL (?ciudad=) en lugar de una cookie, para no guardar nada en el dispositivo. */
 export const PARAM_CIUDAD = 'ciudad';
 
-export function ciudadPorId(id: string | undefined): Ciudad | undefined {
+function ciudadPorId(id: string | undefined): Ciudad | undefined {
 	return CIUDADES.find((ciudad) => ciudad.id === id);
 }
 
@@ -176,7 +176,7 @@ export function ciudadMasCercana(lat: number, lon: number): Ciudad {
 	return mejor;
 }
 
-export type OrigenUbicacion = 'elegida' | 'red' | 'predeterminada';
+type OrigenUbicacion = 'elegida' | 'red' | 'predeterminada';
 
 /**
  * Decide la ciudad del usuario: primero la que eligió (en la URL), luego la región
