@@ -1,6 +1,6 @@
 # Librero
 
-Buscador de libros que muestra dónde comprarlos en México. Impresos: Amazon México, Librerías Gandhi, Planeta de Libros, Penguin Libros, Sanborns, Sears y Liverpool. En eBook: Amazon Kindle, Planeta de Libros, Rakuten Kobo, Google Play Libros y Apple Books.
+Buscador de libros que muestra dónde comprarlos en México: Amazon México, Librerías Gandhi, Planeta de Libros, Penguin Libros, Sanborns, Sears y Liverpool.
 
 - Busca primero ediciones en español y marca con un sello las que están en otro idioma («En inglés»). Si el libro elegido no está en español pero existe una edición en español, lo avisa y la enlaza.
 - Las tiendas con sucursales (Gandhi, Sanborns, Sears y Liverpool) enlazan a Google Maps con la ciudad del usuario: CDMX por alcaldía, Estado de México, Morelos y las principales ciudades de cada estado.
@@ -50,7 +50,6 @@ src/
 │   ├── sinopsis.ts      Limpieza de descripciones y resumen de Wikipedia
 │   ├── http.ts          Peticiones JSON con caché
 │   ├── tiendas.ts       Tiendas, URLs de búsqueda y sellos editoriales
-│   ├── apple.ts         Enlace a la ficha del eBook en Apple Books
 │   ├── ubicacion.ts     Estados, ciudades y ciudad más cercana
 │   └── idiomas.ts       Nombres de idiomas y avisos
 ├── pages/
