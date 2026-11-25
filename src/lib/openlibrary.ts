@@ -100,7 +100,7 @@ export interface ResultadoBusqueda {
 	total: number;
 }
 
-export async function buscarLibros(consulta: string, pagina = 1): Promise<ResultadoBusqueda> {
+export async function buscarLibros(consulta: string, pagina = 1, soloEspanol = false): Promise<ResultadoBusqueda> {
 	const params = new URLSearchParams({
 		// lang=es hace que Open Library elija, de cada obra, una edición en español si existe.
 		lang: 'es',
@@ -108,9 +108,9 @@ export async function buscarLibros(consulta: string, pagina = 1): Promise<Result
 		page: String(pagina),
 		fields: CAMPOS,
 	});
-	const isbn = consulta.replace(/[-\s]/g, '');
+	const isbn = consulta.replace(/^isbn[:\s]*/i, '').replace(/[-\s]/g, '');
 	if (/^(97[89])?\d{9}[\dX]$/i.test(isbn)) params.set('isbn', isbn);
-	else params.set('q', consulta);
+	else params.set('q', soloEspanol ? `${consulta} language:spa` : consulta);
 
 	const datos = await pedir<{ numFound: number; docs: DocBusqueda[] }>(`/search.json?${params}`);
 	const libros = datos.docs.map(libroDesdeBusqueda);
@@ -358,5 +358,5 @@ function mejorIsbn(isbns: string[]): string | undefined {
 }
 
 export function urlPortada(id: number | undefined, tamano: 'S' | 'M' | 'L' = 'M'): string | undefined {
-	return id ? `https://covers.openlibrary.org/b/id/${id}-${tamano}.jpg` : undefined;
+	return id ? `https://covers.openlibrary.org/b/id/${id}-${tamano}.jpg?default=false` : undefined;
 }

@@ -194,7 +194,23 @@ const sitio = { '@type': 'WebSite', name: 'Librero', url: new URL('/', Astro.sit
 		}
 	});
 
+	document.addEventListener('submit', (evento) => {
+		const form = evento.target;
+		if (!(form instanceof HTMLFormElement) || !form.closest('.busqueda')) return;
+		const boton = form.querySelector<HTMLButtonElement>('.boton');
+		const texto = form.querySelector<HTMLElement>('.texto-boton');
+		if (!boton || !texto) return;
+		texto.textContent = 'Buscando…';
+		boton.setAttribute('aria-busy', 'true');
+	});
+
 	document.addEventListener('astro:page-load', () => {
+		const boton = document.querySelector<HTMLButtonElement>('.busqueda .boton');
+		const texto = document.querySelector<HTMLElement>('.busqueda .texto-boton');
+		if (boton && texto) {
+			texto.textContent = 'Buscar libro';
+			boton.removeAttribute('aria-busy');
+		}
 		const ejemplo = document.querySelector<HTMLElement>('.busqueda .ejemplo');
 		const campo = document.querySelector<HTMLInputElement>('.busqueda input[type="search"]');
 		const aviso = document.querySelector<HTMLElement>('.busqueda [role="status"]');
