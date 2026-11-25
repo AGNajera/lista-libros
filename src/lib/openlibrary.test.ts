@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { PAGINA_MAXIMA, POR_PAGINA, obtenerLibro, paginaPedida, paginasDe } from './openlibrary';
+import { PAGINA_MAXIMA, POR_PAGINA, buscarLibros, obtenerLibro, paginaPedida, paginasDe } from './openlibrary';
 
 describe('paginaPedida', () => {
 	it.each([
@@ -97,5 +97,48 @@ describe('obtenerLibro', () => {
 		const libro = await obtenerLibro('OL907W', undefined, { autores: ['James Clear'], wikipedia: false });
 		expect(libro).toMatchObject({ autores: ['James Clear'], sinopsis: undefined });
 		expect(pedidas.some((url) => url.includes('/authors/') || url.includes('wikipedia.org'))).toBe(false);
+	});
+});
+
+describe('buscarLibros por ISBN', () => {
+	afterEach(() => vi.unstubAllGlobals());
+
+	it.each([
+		['978-607-07-5040-3', '9786070750403'],
+		['ISBN 978-607-07-5041-0', '9786070750410'],
+		['isbn:9786070750427', '9786070750427'],
+	])('consulta «%s» usando el parámetro isbn=%s y conserva el ISBN en el resultado', async (consulta, esperado) => {
+		const pedidas: string[] = [];
+		vi.stubGlobal('fetch', async (url: string) => {
+			pedidas.push(url);
+			return Response.json({
+				numFound: 1,
+				docs: [
+					{
+						key: '/works/OL17930368W',
+						title: 'Hábitos atómicos',
+						author_name: ['James Clear'],
+						editions: {
+							docs: [
+								{
+									key: '/books/OL51155019M',
+									title: 'Hábitos atómicos',
+									language: ['spa'],
+									isbn: [esperado],
+									publisher: ['Editorial Diana'],
+									publish_date: ['2019'],
+								},
+							],
+						},
+					},
+				],
+			});
+		});
+
+		const resultado = await buscarLibros(consulta);
+		const url = new URL(pedidas[0]);
+		expect(url.searchParams.get('isbn')).toBe(esperado);
+		expect(url.searchParams.has('q')).toBe(false);
+		expect(resultado.libros[0]?.isbn).toBe(esperado);
 	});
 });

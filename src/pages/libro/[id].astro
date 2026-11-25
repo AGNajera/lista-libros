@@ -165,6 +165,18 @@ const datosLibro = libro && {
 									<dd>{valor}</dd>
 								</div>
 							))}
+							{libro.isbn && (
+								<div>
+									<dt>ISBN</dt>
+									<dd class="valor-isbn">
+										<span>{libro.isbn}</span>
+										<button type="button" class="copiar-isbn" data-copiar-isbn={libro.isbn}>
+											Copiar
+										</button>
+										<span class="visualmente-oculto" role="status" aria-atomic="true" data-estado-isbn></span>
+									</dd>
+								</div>
+							)}
 						</dl>
 					</div>
 				</div>
@@ -285,6 +297,30 @@ const datosLibro = libro && {
 	}
 </Layout>
 
+<script>
+	let temporizadorCopia: ReturnType<typeof setTimeout> | undefined;
+
+	document.addEventListener('click', async (evento) => {
+		const boton = (evento.target as Element).closest<HTMLButtonElement>('[data-copiar-isbn]');
+		if (!boton) return;
+		const isbn = boton.dataset.copiarIsbn;
+		if (!isbn) return;
+		const estado = boton.parentElement?.querySelector<HTMLElement>('[data-estado-isbn]');
+		try {
+			await navigator.clipboard?.writeText(isbn);
+			boton.textContent = 'Copiado';
+			if (estado) estado.textContent = 'ISBN copiado';
+			clearTimeout(temporizadorCopia);
+			temporizadorCopia = setTimeout(() => {
+				if (boton.isConnected) boton.textContent = 'Copiar';
+				if (estado?.isConnected) estado.textContent = '';
+			}, 1800);
+		} catch {
+			if (estado) estado.textContent = 'No se pudo copiar el ISBN';
+		}
+	});
+</script>
+
 <style>
 	.volver {
 		display: inline-block;
@@ -318,7 +354,7 @@ const datosLibro = libro && {
 
 	h1 {
 		font-size: var(--paso-4);
-		font-weight: 800;
+		font-weight: 700;
 		letter-spacing: -0.02em;
 		max-width: 20ch;
 		overflow-wrap: break-word;
@@ -358,6 +394,29 @@ const datosLibro = libro && {
 		margin: 0;
 		font-weight: 700;
 		overflow-wrap: anywhere;
+	}
+
+	.valor-isbn {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.4rem;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.copiar-isbn {
+		padding: 0.15rem 0.5rem;
+		border: 1px solid var(--renglon);
+		border-radius: 0.35rem;
+		background: var(--papel);
+		color: var(--rosa-texto);
+		font: 700 var(--paso--1) / 1.1 var(--font-ui);
+		cursor: pointer;
+	}
+
+	.copiar-isbn:hover {
+		border-color: var(--rosa-texto);
+		color: var(--tinta);
 	}
 
 	.sinopsis {
